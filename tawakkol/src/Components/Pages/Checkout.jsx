@@ -56,6 +56,7 @@ import {
 import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import API_BASE from '../../Config/api';
 
 // Theme colors - White background with gold/black accents
 const palette = {
@@ -216,12 +217,10 @@ const Checkout = () => {
         total: preservedTotal,
         notes: formData.notes.trim()
       };
-
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
       
-      console.log('Submitting order to:', API_URL);
+      console.log('Submitting order to:', API_BASE);
 
-      const response = await fetch(`${API_URL}/api/orders`, {
+      const response = await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

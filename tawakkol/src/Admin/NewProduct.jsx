@@ -49,6 +49,7 @@ import {
 import { styled } from '@mui/material/styles';
 // Add at the top of your NewProduct.js file
 import { getToken, isAuthenticated, logout, getCurrentAdmin } from '../Config/auth';
+import API_BASE from '../../Config/api';
 
 // Custom theme with monospace font
 const themeStyles = {
@@ -156,7 +157,6 @@ const CATEGORY_OPTIONS = ['Sport', 'Casual', 'Religious', 'Streetwear'];
 
 const steps = ['Product Information', 'Visual Assets', 'Final Review'];
 
-const API_BASE_URL = '/api';
 
 const NewProduct = () => {
   // Form state with Sport as default category
@@ -414,7 +414,7 @@ const getAuthToken = () => getToken();
       });
 
       // Use fetch API with progress tracking
-      const response = await fetch(`${API_BASE_URL}/products`, {
+      const response = await fetch(`${API_BASE}/products`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

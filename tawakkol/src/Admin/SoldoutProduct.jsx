@@ -111,6 +111,7 @@ import {
   RadialLinearScale
 } from 'chart.js';
 import { Line, Bar, Doughnut, PolarArea } from 'react-chartjs-2';
+import API_BASE from '../../Config/api';
 
 // Register ChartJS components
 ChartJS.register(
@@ -294,7 +295,6 @@ const SoldoutProduct = () => {
   const [aiInsights, setAiInsights] = useState([]);
   const [performanceScore, setPerformanceScore] = useState(87);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 

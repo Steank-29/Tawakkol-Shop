@@ -54,6 +54,7 @@ import {
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import API_BASE from '../../Config/api';
 
 // ==================== THEME & STYLES ====================
 const themeStyles = {
@@ -164,8 +165,8 @@ const ManageProducts = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/products';
   
   
   const token = localStorage.getItem('token') || 'your-token-here';
@@ -201,7 +202,7 @@ const ManageProducts = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/products`);
+      const response = await axios.get(`${API_BASE}/api/products`);
       setProducts(response.data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -238,7 +239,7 @@ const ManageProducts = () => {
       }
 
       await axios.put(
-        `${API_URL}/${selectedProduct._id}`,
+        `${API_BASE}/${selectedProduct._id}`,
         formPayload,
         {
           headers: {
@@ -263,7 +264,7 @@ const ManageProducts = () => {
   const deleteProduct = async (productId) => {
     try {
       setDeleting(true);
-      await axios.delete(`${API_URL}/${productId}`, {
+      await axios.delete(`${API_BASE}/${productId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
