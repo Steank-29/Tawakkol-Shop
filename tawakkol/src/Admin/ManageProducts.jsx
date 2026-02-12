@@ -54,7 +54,7 @@ import {
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import API_BASE from '../../Config/api.js';
+import API_BASE from '../Config/api.js';
 
 // ==================== THEME & STYLES ====================
 const themeStyles = {

@@ -49,7 +49,7 @@ import {
 import { styled } from '@mui/material/styles';
 // Add at the top of your NewProduct.js file
 import { getToken, isAuthenticated, logout, getCurrentAdmin } from '../Config/auth';
-import API_BASE from '../../Config/api.js';
+import API_BASE from '../Config/api.js'
 
 // Custom theme with monospace font
 const themeStyles = {

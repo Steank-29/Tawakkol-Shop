@@ -111,7 +111,7 @@ import {
   RadialLinearScale
 } from 'chart.js';
 import { Line, Bar, Doughnut, PolarArea } from 'react-chartjs-2';
-import API_BASE from '../../Config/api.js';
+import API_BASE from '../Config/api.js'
 
 
 // Register ChartJS components
