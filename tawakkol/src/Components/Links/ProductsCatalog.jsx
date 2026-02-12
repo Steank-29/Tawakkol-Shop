@@ -246,7 +246,7 @@ const ProductsCatalog = () => {
       </Snackbar>
 
       {/* Products Grid */}
-      <Container maxWidth="xl" sx={{ mt: 6 }}>
+      <Container maxWidth="xl" sx={{ mt: 6  }}>
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
