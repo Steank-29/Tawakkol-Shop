@@ -17,11 +17,38 @@ const orderRoutes = require('./routes/order');
 // Initialize app
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
+// CORS configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Get allowed origins from env or use defaults
+    const allowedOrigins = process.env.FRONTEND_URL 
+      ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+      : [
+          'http://localhost:3000',
+          'http://localhost:5173',
+          'http://localhost:5174',
+          'https://tawakkol-shop.vercel.app',
+          'https://tawakkol.vercel.app'
+        ];
+    
+    // Allow requests with no origin (server-to-server, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('🚫 Blocked by CORS:', origin);
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
