@@ -12,7 +12,8 @@ import {
   useTheme,
   useMediaQuery,
   Backdrop,
-  CircularProgress
+  CircularProgress,
+  Snackbar
 } from '@mui/material';
 import {
   Visibility,
@@ -25,8 +26,9 @@ import {
   Error as ErrorIcon,
   Security
 } from '@mui/icons-material';
-import { toast, Toaster } from 'sonner';
 import { setAuthData } from '../../Config/auth';
+import API_BASE from '../../Config/api.js';
+import tawakkol from '../../assets/tawakkol.png';
 
 const premiumColors = {
   noir: '#1a1a1a',
@@ -55,9 +57,45 @@ const glassStyle = {
   overflow: 'hidden'
 };
 
-// === CUSTOM TOAST COMPONENT ===
-const CustomToast = ({ type, email, message, onDismiss, progress }) => {
+const CustomToast = ({ type, email, message, onDismiss }) => {
   const isSuccess = type === 'success';
+  const isInfo = type === 'info';
+
+  const getIcon = () => {
+    if (isSuccess) return <Check fontSize="small" />;
+    if (isInfo) return <Security fontSize="small" />;
+    return <ErrorIcon fontSize="small" />;
+  };
+
+  const getBorderColor = () => {
+    if (isSuccess) return premiumColors.success + '40';
+    if (isInfo) return premiumColors.gold + '40';
+    return premiumColors.error + '40';
+  };
+
+  const getBoxShadowColor = () => {
+    if (isSuccess) return premiumColors.success + '25';
+    if (isInfo) return premiumColors.gold + '25';
+    return premiumColors.error + '25';
+  };
+
+  const getIconColor = () => {
+    if (isSuccess) return premiumColors.success;
+    if (isInfo) return premiumColors.gold;
+    return premiumColors.error;
+  };
+
+  const getIconBackground = () => {
+    if (isSuccess) return premiumColors.success + '20';
+    if (isInfo) return premiumColors.gold + '20';
+    return premiumColors.error + '20';
+  };
+
+  const getMessageColor = () => {
+    if (isSuccess) return premiumColors.white;
+    if (isInfo) return premiumColors.goldLight;
+    return premiumColors.goldLight;
+  };
 
   return (
     <Box
@@ -68,101 +106,86 @@ const CustomToast = ({ type, email, message, onDismiss, progress }) => {
         p: 2,
         borderRadius: 3,
         background: `linear-gradient(135deg, ${premiumColors.noir}EE 0%, ${premiumColors.charcoal}EE 100%)`,
-        border: `1px solid ${isSuccess ? premiumColors.success + '40' : premiumColors.error + '40'}`,
+        border: `1px solid ${getBorderColor()}`,
         backdropFilter: 'blur(25px)',
-        boxShadow: `0 12px 40px ${isSuccess ? premiumColors.success + '25' : premiumColors.error + '25'}`,
+        boxShadow: `0 12px 40px ${getBoxShadowColor()}`,
         maxWidth: 450,
         fontFamily: "'Playfair Display', serif",
         position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: isSuccess ? premiumColors.success : premiumColors.error,
-          animation: progress ? `shrinkWidth ${progress.duration}ms linear` : 'none'
-        }
+        overflow: 'hidden'
       }}
     >
-      {/* Animated Logo */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        width: 78, 
+        height: 78,
+        minWidth: 78,
+        bgcolor: premiumColors.gold + '15',
+        borderRadius: 2,
+        overflow: 'hidden'
+      }}>
         <Box
           component="img"
-          src="/tawakkol-logo.svg"
+          src={tawakkol}
           alt="Tawakkol"
           sx={{ 
-            width: 40, 
-            height: 40, 
-            mb: 0.5,
-            filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))',
-            animation: 'pulse 2s ease-in-out infinite'
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))'
           }}
         />
-        <Typography
-          sx={{
-            background: premiumColors.premiumGradient,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-          }}
-        >
-          Tawakkol
-        </Typography>
       </Box>
 
-      {/* Content */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Typography
-            sx={{
-              color: premiumColors.white,
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {email}
-          </Typography>
-        </Box>
+        {!isSuccess && email && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Typography
+              sx={{
+                color: premiumColors.white,
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {email}
+            </Typography>
+          </Box>
+        )}
         <Typography
           sx={{
-            color: premiumColors.goldLight,
+            color: getMessageColor(),
             fontSize: '0.85rem',
             lineHeight: 1.4,
             overflow: 'hidden',
             display: '-webkit-box',
             WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
+            fontWeight: isSuccess ? 600 : 400
           }}
         >
           {message}
         </Typography>
       </Box>
 
-      {/* Action Buttons */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <IconButton
           size="small"
           sx={{ 
-            color: isSuccess ? premiumColors.success : premiumColors.error, 
+            color: getIconColor(),
             p: 0.5,
-            background: isSuccess ? premiumColors.success + '20' : premiumColors.error + '20',
+            background: getIconBackground(),
             '&:hover': {
-              background: isSuccess ? premiumColors.success + '30' : premiumColors.error + '30',
+              background: getIconBackground().replace('20', '30'),
               transform: 'scale(1.1)'
             }
           }}
         >
-          {isSuccess ? <Check fontSize="small" /> : <ErrorIcon fontSize="small" />}
+          {getIcon()}
         </IconButton>
         <IconButton
           size="small"
@@ -193,6 +216,14 @@ const Login = ({ onClose, onSwitchToSignup }) => {
   });
   const [errors, setErrors] = useState({});
   const [typingEffect, setTypingEffect] = useState('');
+  
+  // Toast state management
+  const [toastState, setToastState] = useState({
+    open: false,
+    type: '',
+    email: '',
+    message: ''
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -213,14 +244,25 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     return () => clearInterval(typing);
   }, []);
 
+  const handleToastClose = () => {
+    setToastState(prev => ({ ...prev, open: false }));
+  };
+
+  const showToast = (type, email, message) => {
+    setToastState({
+      open: true,
+      type,
+      email,
+      message
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Clear previous errors
     setErrors({});
     
-    // Basic validation
     const newErrors = {};
     if (!formData.email) newErrors.email = 'Email requis';
     if (!formData.password) newErrors.password = 'Mot de passe requis';
@@ -228,17 +270,10 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       
-      // VALIDATION ERROR TOAST
-      toast.custom(
-        (t) => (
-          <CustomToast
-            type="error"
-            email={formData.email || "Utilisateur"}
-            message="Veuillez remplir tous les champs requis."
-            onDismiss={() => toast.dismiss(t)}
-          />
-        ),
-        { duration: 5000, id: 'login-validation-error' }
+      showToast(
+        'error',
+        formData.email || "Utilisateur",
+        "Veuillez remplir tous les champs requis."
       );
       
       setIsLoading(false);
@@ -246,8 +281,7 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     }
 
     try {
-      // Send login request to your backend using proxy
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -261,57 +295,29 @@ const Login = ({ onClose, onSwitchToSignup }) => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Use our auth utility to save data properly
         setAuthData(data.token, data.admin);
         
-        // Get admin role from backend response
         const adminRole = data.admin.role;
         const adminName = data.admin.firstName + ' ' + data.admin.lastName;
-        const adminEmail = data.admin.email;
         
-        // SUCCESS TOAST - Show role-specific message
         const welcomeMessage = adminRole === 'super-admin' 
           ? `Bienvenue Super Admin ${adminName}! Accès complet activé.`
           : `Bienvenue Admin ${adminName}! Accès à votre espace de gestion.`;
         
-        toast.custom(
-          (t) => (
-            <CustomToast
-              type="success"
-              email={adminEmail}
-              message={welcomeMessage}
-              onDismiss={() => toast.dismiss(t)}
-              progress={{ duration: 5000 }}
-            />
-          ),
-          { 
-            duration: 5000, 
-            id: 'login-success',
-            position: 'top-center'
-          }
-        );
+        showToast('success', '', welcomeMessage);
         
-        // Redirect based on admin role from backend
         setTimeout(() => {
-          // Check if there's a redirect URL stored in sessionStorage
           const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
           
           if (redirectAfterLogin) {
-            // Clear the stored redirect URL
             sessionStorage.removeItem('redirectAfterLogin');
             window.location.href = redirectAfterLogin;
           } else {
-            // Default redirect based on role
-            if (adminRole === 'super-admin') {
-              window.location.href = '/Admin-Panel/Creating-New-Product';
-            } else {
-              window.location.href = '/Admin-Panel/Creating-New-Product';
-            }
+            window.location.href = '/Admin-Panel/Creating-New-Product';
           }
         }, 2000);
         
       } else {
-        // Handle different error cases
         let errorMessage = data.message || 'Échec de la connexion';
         
         if (data.message?.includes('Invalid credentials')) {
@@ -334,25 +340,13 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     } catch (err) {
       console.error('Login error:', err);
       
-      // Check if it's a network error
       let errorMessage = err.message || "Erreur de connexion. Veuillez réessayer.";
       
       if (err.message.includes('Failed to fetch')) {
         errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est en cours d\'exécution.';
       }
       
-      // ERROR TOAST
-      toast.custom(
-        (t) => (
-          <CustomToast
-            type="error"
-            email={formData.email}
-            message={errorMessage}
-            onDismiss={() => toast.dismiss(t)}
-          />
-        ),
-        { duration: 6000, id: 'login-error' }
-      );
+      showToast('error', formData.email, errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -364,61 +358,16 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  // Pre-fill demo credentials for testing
-  const fillDemoCredentials = (type = 'super-admin') => {
-    if (type === 'super-admin') {
-      setFormData({
-        email: 'superadmin@tawakkol.com',
-        password: 'superadmin123'
-      });
-      toast.custom(
-        (t) => (
-          <CustomToast
-            type="info"
-            email="superadmin@tawakkol.com"
-            message="Super Admin credentials filled. Click 'Se Connecter' to login."
-            onDismiss={() => toast.dismiss(t)}
-          />
-        ),
-        { duration: 4000, id: 'demo-filled' }
-      );
-    } else {
-      setFormData({
-        email: 'admin@tawakkol.com',
-        password: 'admin123'
-      });
-      toast.custom(
-        (t) => (
-          <CustomToast
-            type="info"
-            email="admin@tawakkol.com"
-            message="Admin credentials filled. Click 'Se Connecter' to login."
-            onDismiss={() => toast.dismiss(t)}
-          />
-        ),
-        { duration: 4000, id: 'demo-filled' }
-      );
-    }
+  const handleForgotPassword = () => {
+    showToast(
+      'info',
+      formData.email || "Utilisateur",
+      "Fonctionnalité de réinitialisation du mot de passe bientôt disponible."
+    );
   };
 
   return (
     <>
-      {/* SONNER TOASTER */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'transparent',
-            border: 'none',
-            boxShadow: 'none',
-            padding: 0,
-          },
-        }}
-        richColors
-        closeButton
-        theme="dark"
-      />
-
       <Box sx={{
         width: '99vw',
         minHeight: '100vh',
@@ -731,7 +680,6 @@ const Login = ({ onClose, onSwitchToSignup }) => {
                       />
                     </Box>
 
-
                     <Box sx={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -740,33 +688,9 @@ const Login = ({ onClose, onSwitchToSignup }) => {
                       flexDirection: { xs: 'column', sm: 'row' },
                       gap: { xs: 2, sm: 0 }
                     }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          gap: { xs: 2, md: 3 },
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        {/* Keep Forgot Password Button */}
-                      </Box>
-
                       <Button 
                         type="button"
-                        onClick={() => {
-                          // Handle forgot password
-                          toast.custom(
-                            (t) => (
-                              <CustomToast
-                                type="info"
-                                email={formData.email || "Utilisateur"}
-                                message="Fonctionnalité de réinitialisation du mot de passe bientôt disponible."
-                                onDismiss={() => toast.dismiss(t)}
-                              />
-                            ),
-                            { duration: 5000, id: 'forgot-password-info' }
-                          );
-                        }}
+                        onClick={handleForgotPassword}
                         sx={{
                           color: premiumColors.gold,
                           textTransform: 'none',
@@ -923,12 +847,27 @@ const Login = ({ onClose, onSwitchToSignup }) => {
         </Backdrop>
       </Box>
 
-      <style jsx global>{`
-        @keyframes shrinkWidth {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-      `}</style>
+      {/* Custom Toast using MUI Snackbar */}
+      <Snackbar
+        open={toastState.open}
+        autoHideDuration={toastState.type === 'success' ? 4000 : toastState.type === 'info' ? 5000 : 6000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{
+          '& .MuiSnackbar-root': {
+            maxWidth: '100%'
+          }
+        }}
+      >
+        <Box>
+          <CustomToast
+            type={toastState.type}
+            email={toastState.email}
+            message={toastState.message}
+            onDismiss={handleToastClose}
+          />
+        </Box>
+      </Snackbar>
     </>
   );
 };

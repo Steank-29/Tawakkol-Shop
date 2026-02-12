@@ -202,7 +202,7 @@ const ManageProducts = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/products`);
+      const response = await axios.get(`${API_BASE}api/products`);
       setProducts(response.data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -239,7 +239,7 @@ const ManageProducts = () => {
       }
 
       await axios.put(
-        `${API_BASE}/${selectedProduct._id}`,
+        `${API_BASE}${selectedProduct._id}`,
         formPayload,
         {
           headers: {
@@ -264,7 +264,7 @@ const ManageProducts = () => {
   const deleteProduct = async (productId) => {
     try {
       setDeleting(true);
-      await axios.delete(`${API_BASE}/${productId}`, {
+      await axios.delete(`${API_BASE}${productId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

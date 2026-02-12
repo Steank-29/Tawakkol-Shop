@@ -304,7 +304,7 @@ const SoldoutProduct = () => {
     setRefreshing(true);
     try {
       const [productsRes] = await Promise.all([
-        axios.get(`${API_BASE}/api/products`),
+        axios.get(`${API_BASE}api/products`),
         new Promise(resolve => setTimeout(resolve, 800)) // Simulated delay for premium feel
       ]);
       

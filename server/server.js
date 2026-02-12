@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -17,90 +18,131 @@ const orderRoutes = require('./routes/order');
 // Initialize app
 const app = express();
 
-// CORS configuration
+// ============ PRODUCTION CORS CONFIGURATION ============
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://tawakkol-shop.vercel.app',
+
+].filter(Boolean); // Remove undefined values
+
+// CORS options
 const corsOptions = {
   origin: function(origin, callback) {
-    // Get allowed origins from env or use defaults
-    const allowedOrigins = process.env.FRONTEND_URL 
-      ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-      : [
-          'http://localhost:3000',
-          'http://localhost:5173',
-          'http://localhost:5174',
-          'https://tawakkol-shop.vercel.app',
-          'https://tawakkol.vercel.app'
-        ];
-    
-    // Allow requests with no origin (server-to-server, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, curl)
     if (!origin) {
       return callback(null, true);
     }
     
-    // Check if origin is allowed
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // In production, check against allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('🚫 Blocked by CORS:', origin);
+      console.error(`🚫 Blocked origin: ${origin}`);
+      console.log('Allowed origins:', allowedOrigins);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range', 'Set-Cookie'],
+  maxAge: 86400 // 24 hours
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Manual CORS headers as fallback
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Set CORS headers for allowed origins
+  if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (process.env.NODE_ENV !== 'production') {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.headers.origin || 'No origin'}`);
+  next();
+});
+
+// Security headers
+app.use((req, res, next) => {
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('X-XSS-Protection', '1; mode=block');
+  res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Parse JSON and URL-encoded data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Parse JSON and URL-encoded data with increased limits
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Test route - SINGLE DEFINITION (removed duplicate)
+// ============ CONFIGURATION ENDPOINT ============
+// This helps frontend detect the correct API URL
+app.get('/api/config', (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+  const baseUrl = `${protocol}://${host}`;
+  
+  res.json({
+    success: true,
+    apiUrl: baseUrl,
+    environment: process.env.NODE_ENV || 'development',
+    corsOrigins: allowedOrigins,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Tawakkol Clothing Store API is running...',
     version: '1.0.0',
-    endpoints: {
-      admin: {
-        register: 'POST /api/admin/register',
-        login: 'POST /api/admin/login',
-        profile: 'GET /api/admin/me',
-        update_profile: 'PUT /api/admin/update-profile',
-        upload_picture: 'PUT /api/admin/upload-picture'
-      },
-      products: {
-        get_all: 'GET /api/products',
-        get_single: 'GET /api/products/:id',
-        create: 'POST /api/products (admin only)',
-        update: 'PUT /api/products/:id (admin only)',
-        delete: 'DELETE /api/products/:id (super-admin only)',
-        toggle_status: 'PATCH /api/products/:id/status (admin only)',
-        update_stock: 'PATCH /api/products/:id/stock (admin only)'
-      },
-      uploads: {
-        admin_pictures: '/uploads/pictures/',
-        product_images: '/uploads/products/',
-        cloudinary_folders: {
-          admins: 'tawakkol/admins',
-          sport: 'tawakkol/sport',
-          casual: 'tawakkol/casual',
-          religious: 'tawakkol/religious',
-          streetwear: 'tawakkol/streetwear'
-        }
-      }
-    },
-    limits: {
-      admin_images: '5MB',
-      product_images: '10MB',
-      allowed_types: 'jpg, jpeg, png, gif, webp'
-    }
+    environment: process.env.NODE_ENV,
+    cors_enabled_for: allowedOrigins,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -111,15 +153,26 @@ app.get('/health', (req, res) => {
     message: 'API is healthy',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    uploads_directory: path.join(__dirname, 'uploads'),
     database: 'Connected',
-    cloudinary: 'Configured'
+    cloudinary: process.env.CLOUDINARY_CLOUD_NAME ? 'Configured' : 'Not configured',
+    cors_origins: allowedOrigins
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  
   const statusCode = err.statusCode || 500;
+  
+  // Handle CORS errors
+  if (err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS error: Origin not allowed',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
   
   // Handle multer file size limit error
   if (err.code === 'LIMIT_FILE_SIZE') {
@@ -155,6 +208,7 @@ app.use((err, req, res, next) => {
     });
   }
   
+  // Default error response
   res.status(statusCode).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -167,32 +221,29 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,
-    available_routes: {
+    available_endpoints: {
       home: 'GET /',
       health: 'GET /health',
+      config: 'GET /api/config',
       admin: {
-        register: 'POST /api/admin/register',
         login: 'POST /api/admin/login',
-        profile: 'GET /api/admin/me',
-        update_picture: 'PUT /api/admin/upload-picture'
+        register: 'POST /api/admin/register',
+        profile: 'GET /api/admin/me'
       },
       products: {
         list: 'GET /api/products',
-        single: 'GET /api/products/:id',
-        create: 'POST /api/products',
-        update: 'PUT /api/products/:id'
+        single: 'GET /api/products/:id'
       }
     }
   });
 });
 
-// Server start
+// ============ SERVER START ============
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     // Ensure uploads directory structure exists
-    const fs = require('fs');
     const uploadsDir = path.join(__dirname, 'uploads');
     const picturesDir = path.join(uploadsDir, 'pictures');
     const productsDir = path.join(uploadsDir, 'products');
@@ -220,39 +271,36 @@ const startServer = async () => {
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`\n🚀 Server running on port ${PORT}`);
-      console.log(`🌐 API Base URL: http://localhost:${PORT}`);
-      console.log(`\n📊 API Endpoints:`);
-      console.log(`   👤 Admin API: http://localhost:${PORT}/api/admin`);
-      console.log(`   🛍️  Products API: http://localhost:${PORT}/api/products`);
-      console.log(`   ❤️  Health check: http://localhost:${PORT}/health`);
+      console.log('\n=================================');
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📡 API URL: http://localhost:${PORT}`);
+      console.log('=================================\n');
       
-      console.log(`\n🖼️  Static File Access:`);
+      console.log('📊 CORS Configuration:');
+      console.log(`   Allowed Origins: ${allowedOrigins.length} domains`);
+      allowedOrigins.forEach((origin, index) => {
+        console.log(`   ${index + 1}. ${origin}`);
+      });
+      
+      console.log('\n📡 API Endpoints:');
+      console.log(`   👤 Admin: http://localhost:${PORT}/api/admin`);
+      console.log(`   🛍️  Products: http://localhost:${PORT}/api/products`);
+      console.log(`   ❤️  Health: http://localhost:${PORT}/health`);
+      console.log(`   ⚙️  Config: http://localhost:${PORT}/api/config`);
+      
+      console.log('\n🖼️  Static Files:');
       console.log(`   👤 Admin pictures: http://localhost:${PORT}/uploads/pictures/`);
       console.log(`   🛍️  Product images: http://localhost:${PORT}/uploads/products/`);
       
-      console.log(`\n☁️  Cloudinary Folders:`);
-      console.log(`   👤 Admins: tawakkol/admins`);
-      console.log(`   ⚽ Sport: tawakkol/sport`);
-      console.log(`   👕 Casual: tawakkol/casual`);
-      console.log(`   🙏 Religious: tawakkol/religious`);
-      console.log(`   🏙️  Streetwear: tawakkol/streetwear`);
+      console.log('\n☁️  Cloudinary:');
+      console.log(`   Status: ${process.env.CLOUDINARY_CLOUD_NAME ? '✓ Configured' : '✗ Not configured'}`);
       
-      console.log(`\n📊 Environment:`);
-      console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`   Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-      console.log(`   MongoDB: ${process.env.MONGODB_URI ? '✓ Configured' : '✗ Not configured'}`);
-      console.log(`   Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? '✓ Configured' : '✗ Not configured'}`);
+      console.log('\n🔐 Authentication:');
+      console.log(`   JWT: ${process.env.JWT_SECRET ? '✓ Set' : '✗ Not set'}`);
+      console.log(`   Expiry: ${process.env.JWT_EXPIRE || '24h'}`);
       
-      console.log(`\n📏 Upload Limits:`);
-      console.log(`   Admin pictures: 5MB`);
-      console.log(`   Product images: 10MB`);
-      console.log(`   Max files (products): 9 (1 main + 8 additional)`);
-      console.log(`   Allowed types: jpg, jpeg, png, gif, webp`);
-      
-      console.log(`\n🔐 Authentication:`);
-      console.log(`   JWT Secret: ${process.env.JWT_SECRET ? '✓ Set' : '✗ Not set'}`);
-      console.log(`   Token Expiry: ${process.env.JWT_EXPIRE || '24h'}`);
+      console.log('\n✅ Server ready to accept connections\n');
     });
     
   } catch (error) {

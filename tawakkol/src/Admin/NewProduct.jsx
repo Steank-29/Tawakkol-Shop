@@ -414,7 +414,7 @@ const getAuthToken = () => getToken();
       });
 
       // Use fetch API with progress tracking
-      const response = await fetch(`${API_BASE}/products`, {
+      const response = await fetch(`${API_BASE}products`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
