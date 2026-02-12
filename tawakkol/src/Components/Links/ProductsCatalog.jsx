@@ -85,7 +85,7 @@ const ProductsCatalog = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE}/api/products`);
+      const res = await axios.get(`${API_BASE}api/products`);
       setProducts(res.data.products || []);
     } catch (err) {
       console.error('Error loading products:', err);
