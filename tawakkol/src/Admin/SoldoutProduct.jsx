@@ -111,7 +111,8 @@ import {
   RadialLinearScale
 } from 'chart.js';
 import { Line, Bar, Doughnut, PolarArea } from 'react-chartjs-2';
-import API_BASE from '../../Config/api';
+import API_BASE from '../../Config/api.js';
+
 
 // Register ChartJS components
 ChartJS.register(
@@ -303,7 +304,7 @@ const SoldoutProduct = () => {
     setRefreshing(true);
     try {
       const [productsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/products`),
+        axios.get(`${API_BASE}/api/products`),
         new Promise(resolve => setTimeout(resolve, 800)) // Simulated delay for premium feel
       ]);
       

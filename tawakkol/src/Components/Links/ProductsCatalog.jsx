@@ -43,7 +43,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import axios from 'axios';
-import API_BASE from '../../Config/api';
+import API_BASE from '../../Config/api.js';
 
 // Sophisticated color palette
 const palette = {

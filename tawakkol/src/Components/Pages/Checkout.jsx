@@ -56,7 +56,7 @@ import {
 import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import API_BASE from '../../Config/api';
+import API_BASE from '../../Config/api.js';
 
 // Theme colors - White background with gold/black accents
 const palette = {
