@@ -14,6 +14,7 @@ const connectDB = require('./config/database');
 const adminRoutes = require('./routes/admin');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/order');
+const contactRoutes = require('./routes/contact');
 
 // Initialize app
 const app = express();
@@ -118,6 +119,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/contact', contactRoutes);
 
 // ============ CONFIGURATION ENDPOINT ============
 // This helps frontend detect the correct API URL
