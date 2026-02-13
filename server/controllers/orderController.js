@@ -141,3 +141,32 @@ exports.getOrderByNumber = async (req, res) => {
     });
   }
 };
+
+// Delete order by ID (Super Admin only)
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Commande non trouvée'
+      });
+    }
+    
+    await order.deleteOne();
+    
+    res.json({
+      success: true,
+      message: 'Commande supprimée avec succès'
+    });
+    
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de la commande',
+      error: error.message
+    });
+  }
+};
