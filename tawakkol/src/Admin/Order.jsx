@@ -2013,10 +2013,11 @@ const Order = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale}>
       {/* WHITE BACKGROUND */}
       <Box sx={{ 
-        width: '100%',
+        width: '90%',
         minHeight: '100vh',
         bgcolor: '#ffffff', // PURE WHITE BACKGROUND
-        py: { xs: 2, lg: 5 }
+        py: { xs: 2, lg: 2 },
+        ml:10
       }}>
         {/* CENTERED CONTAINER */}
         <Box sx={{
@@ -2060,13 +2061,13 @@ const Order = () => {
               </Typography>
             </Box>
             
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2,  }}>
               <Tooltip title="Exporter CSV" arrow>
                 <IconButton
                   onClick={exportToCSV}
                   sx={{
                     color: premiumColors.goldDark,
-                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    bgcolor: alpha(premiumColors.noir, 1),
                     width: 48,
                     height: 48,
                     borderRadius: 2,
@@ -2083,7 +2084,7 @@ const Order = () => {
                   onClick={handleRefresh}
                   sx={{
                     color: premiumColors.goldDark,
-                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    bgcolor: alpha(premiumColors.noir, 1),
                     width: 48,
                     height: 48,
                     borderRadius: 2,
@@ -2147,7 +2148,7 @@ const Order = () => {
             sx={{
               p: 3,
               mb: 4,
-              bgcolor: '#f8f8f8',
+              bgcolor: premiumColors.goldDark ,
               border: '1px solid #e0e0e0',
               borderRadius: 3
             }}
@@ -2164,7 +2165,7 @@ const Order = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search sx={{ color: premiumColors.goldDark }} />
+                        <Search sx={{ color: premiumColors.gold }} />
                       </InputAdornment>
                     ),
                     endAdornment: searchTerm && (

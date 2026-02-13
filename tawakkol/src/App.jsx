@@ -17,6 +17,8 @@ import ManageProducts from './Admin/ManageProducts';
 import SoldoutProduct from './Admin/SoldoutProduct';
 import Checkout from './Components/Pages/Checkout';
 import Order from './Admin/Order'
+import Messagerie from './Admin/Messagerie'
+import Facture from './Admin/Facture';
 
 function App() {
   const router = createBrowserRouter([
@@ -112,6 +114,26 @@ function App() {
         <ProtectedRoute>
           <AdminLayout>
             <Order />
+          </AdminLayout>
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/Admin-Panel/Contact',
+      element: (
+        <ProtectedRoute>
+          <AdminLayout>
+            <Messagerie />
+          </AdminLayout>
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/Admin-Panel/Facture',
+      element: (
+        <ProtectedRoute>
+          <AdminLayout>
+            <Facture />
           </AdminLayout>
         </ProtectedRoute>
       )
