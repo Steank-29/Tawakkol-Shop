@@ -1304,7 +1304,7 @@ const Messagerie = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/contact`, {
+      const response = await fetch(`${API_BASE}api/contact`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -1325,7 +1325,7 @@ const Messagerie = () => {
   const fetchContactById = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/contact/${id}`, {
+      const response = await fetch(`${API_BASE}api/contact/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -1342,7 +1342,7 @@ const Messagerie = () => {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/contact/stats`, {
+      const response = await fetch(`${API_BASE}api/contact/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -1357,7 +1357,7 @@ const Messagerie = () => {
   const updateContactStatus = async (id, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/contact/${id}/status`, {
+      const response = await fetch(`${API_BASE}api/contact/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1391,7 +1391,7 @@ const Messagerie = () => {
   const deleteContact = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/contact/${id}`, {
+      const response = await fetch(`${API_BASE}api/contact/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

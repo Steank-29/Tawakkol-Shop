@@ -1792,7 +1792,7 @@ const CreateInvoiceModal = ({ open, onClose, onCreate }) => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/orders`, {
+      const response = await fetch(`${API_BASE}api/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -2188,7 +2188,7 @@ const Facture = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/invoices`, {
+      const response = await fetch(`${API_BASE}api/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
