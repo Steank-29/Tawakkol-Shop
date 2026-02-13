@@ -374,7 +374,7 @@ const handleSubmit = async (e) => {
       formDataToSend.append('file', formData.file);
     }
 
-    const response = await fetch(`${API_BASE}api/contact`, {
+    const response = await fetch(`${API_BASE}/api/contact`, {
       method: 'POST',
       body: formDataToSend
     });
@@ -432,7 +432,7 @@ const handleSubmit = async (e) => {
   return (
     <>
       <Box sx={{
-        width: '100vw',
+        width: '99vw',
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${premiumColors.charcoal} 0%, ${premiumColors.noir} 50%, ${premiumColors.charcoal} 100%)`,
         position: 'relative',

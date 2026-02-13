@@ -16,6 +16,7 @@ import ProtectedRoute from './Config/ProtectedRoute';
 import ManageProducts from './Admin/ManageProducts';
 import SoldoutProduct from './Admin/SoldoutProduct';
 import Checkout from './Components/Pages/Checkout';
+import Order from './Admin/Order'
 
 function App() {
   const router = createBrowserRouter([
@@ -101,6 +102,16 @@ function App() {
         <ProtectedRoute>
           <AdminLayout>
             <SoldoutProduct />
+          </AdminLayout>
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/Admin-Panel/Orders',
+      element: (
+        <ProtectedRoute>
+          <AdminLayout>
+            <Order />
           </AdminLayout>
         </ProtectedRoute>
       )

@@ -210,46 +210,41 @@ const AdminBar = ({
       roles: ['admin', 'super-admin']
     },
     {
-      title: 'Products',
+      title: 'Produit',
       icon: <Inventory />,
       sub: [
-        { title: 'Add New', path: '/Admin-Panel/Creating-New-Product' },
-        { title: 'Manage Products', path: '/Admin-Panel/Manage-Products' },
-        { title: 'Sold Out', path: '/Admin-Panel/Sold-Out-Products' },
+        { title: 'Ajouter un produit', path: '/Admin-Panel/Creating-New-Product' },
+        { title: 'Gérer les produits', path: '/Admin-Panel/Manage-Products' },
+        { title: 'Analyser les produits', path: '/Admin-Panel/Sold-Out-Products' },
       ],
       roles: ['admin', 'super-admin']
     },
     {
       title: 'Orders',
       icon: <ShoppingCart />,
-      sub: [
-        { title: 'All Orders', path: '/Admin-Panel/Orders' },
-        { title: 'Pending', path: '/Admin-Panel/Pending-Orders' },
-        { title: 'Completed', path: '/Admin-Panel/Completed-Orders' },
-        { title: 'Cancelled', path: '/Admin-Panel/Cancelled-Orders' },
-      ],
+      path: '/Admin-Panel/Orders',
       roles: ['admin', 'super-admin']
     },
     { 
-      title: 'Customers', 
+      title: 'Messagerie', 
       icon: <People />, 
-      path: '/Admin-Panel/Customers',
+      path: '/Admin-Panel/Contact',
       roles: ['admin', 'super-admin']
     },
     { 
-      title: 'Analytics', 
+      title: 'Facture', 
       icon: <Analytics />, 
-      path: '/Admin-Panel/Analytics',
+      path: '/Admin-Panel/Facture',
       roles: ['admin', 'super-admin']
     },
     { 
-      title: 'Reports', 
+      title: 'Mes affaires', 
       icon: <Receipt />, 
-      path: '/Admin-Panel/Reports',
+      path: '/Admin-Panel/Trace',
       roles: ['super-admin'] // Only super-admin can see reports
     },
     { 
-      title: 'Settings', 
+      title: 'Paramètres', 
       icon: <Settings />, 
       path: '/Admin-Panel/Settings',
       roles: ['super-admin'] // Only super-admin can see settings
