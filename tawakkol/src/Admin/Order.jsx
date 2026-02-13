@@ -27,19 +27,17 @@ import {
   Avatar,
   Divider,
   Tooltip,
-  Badge,
   LinearProgress,
   Alert,
   Snackbar,
   FormControl,
   InputLabel,
   Select,
-  OutlinedInput,
   ListItemText,
   Checkbox,
-  CircularProgress,
   Zoom,
-  Fade
+  Badge,
+  alpha
 } from '@mui/material';
 import {
   Search,
@@ -54,7 +52,6 @@ import {
   Payment,
   Receipt,
   Download,
-  Print,
   Email,
   Phone,
   LocationOn,
@@ -66,11 +63,12 @@ import {
   ArrowUpward,
   ArrowDownward,
   MoreVert,
-  Edit,
   Delete,
-  CloudDownload,
-  PictureAsPdf,
-  Assessment
+  Store,
+  TrendingUp,
+  TrendingDown,
+  Warning,
+  Info
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -80,79 +78,435 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import API_BASE from '../Config/api';
 
-// ============ PREMIUM COLORS ============
+// ============ PREMIUM COLOR PALETTE - WHITE BACKGROUND + BLACK CARDS ============
 const premiumColors = {
-  noir: '#1a1a1a',
+  // Primary Colors - Elegant Gold Theme
   gold: '#d4af37',
   goldLight: '#f4e4a6',
   goldDark: '#b8941f',
-  charcoal: '#2d2d2d',
+  goldGradient: 'linear-gradient(135deg, #d4af37 0%, #f9d423 50%, #d4af37 100%)',
+  
+  // Card Theme - BLACK CARDS
+  noir: '#000000',     // Pure black for cards
+  charcoal: '#0a0a0a', // Dark black for surfaces
+  surface: '#121212',  // Rich black for cards
+  surfaceLight: '#1e1e1e', // Slightly lighter black for hover
+  
+  // Text Colors
   white: '#ffffff',
-  error: '#ff4757',
-  success: '#2ed573',
-  warning: '#ffa502',
-  info: '#3498db',
-  pending: '#ffa502',
-  confirmed: '#3498db',
-  processing: '#9b59b6',
-  shipped: '#00b894',
-  delivered: '#2ed573',
-  cancelled: '#ff4757',
-  premiumGradient: 'linear-gradient(135deg, #d4af37 0%, #f9d423 50%, #d4af37 100%)'
+  textPrimary: '#ffffff',
+  textSecondary: '#e0e0e0',
+  textMuted: '#9e9e9e',
+  
+  // Status Colors - Vibrant and Clear
+  pending: '#f59e0b',
+  confirmed: '#3b82f6',
+  processing: '#8b5cf6',
+  shipped: '#06b6d4',
+  delivered: '#10b981',
+  cancelled: '#ef4444',
+  
+  // Status Backgrounds - Semi-transparent
+  pendingBg: 'rgba(245, 158, 11, 0.15)',
+  confirmedBg: 'rgba(59, 130, 246, 0.15)',
+  processingBg: 'rgba(139, 92, 246, 0.15)',
+  shippedBg: 'rgba(6, 182, 212, 0.15)',
+  deliveredBg: 'rgba(16, 185, 129, 0.15)',
+  cancelledBg: 'rgba(239, 68, 68, 0.15)',
+  
+  // Utility Colors
+  success: '#10b981',
+  error: '#ef4444',
+  warning: '#f59e0b',
+  info: '#3b82f6',
+  
+  // Shadows - Subtle for white background
+  shadowSm: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+  shadowMd: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+  shadowLg: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+  shadowXl: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  shadowGold: '0 10px 30px -5px rgba(212, 175, 55, 0.2)'
 };
 
-// ============ STATUS CONFIG ============
+// ============ STATUS CONFIGURATION ============
 const statusConfig = {
   pending: {
     label: 'En attente',
     color: premiumColors.pending,
-    bgColor: premiumColors.pending + '20',
+    bgColor: premiumColors.pendingBg,
     icon: <AccessTime />,
+    iconColor: premiumColors.pending,
     next: ['confirmed', 'cancelled']
   },
   confirmed: {
     label: 'Confirmée',
     color: premiumColors.confirmed,
-    bgColor: premiumColors.confirmed + '20',
+    bgColor: premiumColors.confirmedBg,
     icon: <CheckCircle />,
+    iconColor: premiumColors.confirmed,
     next: ['processing', 'cancelled']
   },
   processing: {
     label: 'En traitement',
     color: premiumColors.processing,
-    bgColor: premiumColors.processing + '20',
+    bgColor: premiumColors.processingBg,
     icon: <Inventory />,
+    iconColor: premiumColors.processing,
     next: ['shipped', 'cancelled']
   },
   shipped: {
     label: 'Expédiée',
     color: premiumColors.shipped,
-    bgColor: premiumColors.shipped + '20',
+    bgColor: premiumColors.shippedBg,
     icon: <LocalShipping />,
+    iconColor: premiumColors.shipped,
     next: ['delivered', 'cancelled']
   },
   delivered: {
     label: 'Livrée',
     color: premiumColors.delivered,
-    bgColor: premiumColors.delivered + '20',
+    bgColor: premiumColors.deliveredBg,
     icon: <CheckCircle />,
+    iconColor: premiumColors.delivered,
     next: []
   },
   cancelled: {
     label: 'Annulée',
     color: premiumColors.cancelled,
-    bgColor: premiumColors.cancelled + '20',
+    bgColor: premiumColors.cancelledBg,
     icon: <Cancel />,
+    iconColor: premiumColors.cancelled,
     next: []
   }
 };
 
-// ============ ORDER CARD COMPONENT ============
-const OrderCard = ({ order, onView, onStatusUpdate }) => {
+// ============ STATISTICS CARD COMPONENT - BLACK CARDS ============
+const StatCard = ({ title, value, subtitle, icon, color, trend }) => {
+  return (
+    <Zoom in timeout={400}>
+      <Card
+        elevation={0}
+        sx={{
+          bgcolor: premiumColors.surface, // BLACK CARD
+          border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
+          borderRadius: 3,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: `linear-gradient(90deg, ${color}, ${premiumColors.gold})`,
+            opacity: 0.8
+          },
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: premiumColors.shadowGold,
+            borderColor: alpha(premiumColors.gold, 0.3),
+            bgcolor: premiumColors.charcoal
+          }
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box>
+              <Typography
+                sx={{
+                  color: premiumColors.textMuted,
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  mb: 1
+                }}
+              >
+                {title}
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  color: premiumColors.white,
+                  fontFamily: "'Fjalla One', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '2rem',
+                  lineHeight: 1.2,
+                  mb: 0.5
+                }}
+              >
+                {value}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography
+                  sx={{
+                    color: premiumColors.textMuted,
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  {subtitle}
+                </Typography>
+                {trend && (
+                  <Chip
+                    icon={trend > 0 ? <TrendingUp /> : <TrendingDown />}
+                    label={`${Math.abs(trend)}%`}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.7rem',
+                      bgcolor: trend > 0 ? alpha(premiumColors.success, 0.15) : alpha(premiumColors.error, 0.15),
+                      color: trend > 0 ? premiumColors.success : premiumColors.error,
+                      '& .MuiChip-icon': {
+                        fontSize: '0.7rem',
+                        color: 'inherit'
+                      }
+                    }}
+                  />
+                )}
+              </Box>
+            </Box>
+            <Avatar
+              sx={{
+                bgcolor: alpha(color, 0.15),
+                color: color,
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                '& svg': {
+                  fontSize: '2rem'
+                }
+              }}
+            >
+              {icon}
+            </Avatar>
+          </Box>
+        </CardContent>
+      </Card>
+    </Zoom>
+  );
+};
+
+// ============ DELETE CONFIRMATION DIALOG ============
+const DeleteConfirmDialog = ({ open, onClose, onConfirm, order }) => {
+  if (!order) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: premiumColors.surface, // BLACK CARD
+          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+          borderRadius: 3,
+          boxShadow: premiumColors.shadowXl
+        }
+      }}
+    >
+      <DialogTitle sx={{ p: 3, pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar
+            sx={{
+              bgcolor: alpha(premiumColors.cancelled, 0.15),
+              color: premiumColors.cancelled,
+              width: 56,
+              height: 56,
+              borderRadius: 2
+            }}
+          >
+            <Warning sx={{ fontSize: '2rem' }} />
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{
+                color: premiumColors.white,
+                fontFamily: "'Fjalla One', sans-serif",
+                fontWeight: 700,
+                mb: 0.5
+              }}
+            >
+              Confirmer la suppression
+            </Typography>
+            <Typography
+              sx={{
+                color: premiumColors.textMuted,
+                fontSize: '0.9rem'
+              }}
+            >
+              Cette action est irréversible
+            </Typography>
+          </Box>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            bgcolor: alpha(premiumColors.cancelled, 0.05),
+            border: `1px solid ${alpha(premiumColors.cancelled, 0.2)}`,
+            borderRadius: 2,
+            mb: 2
+          }}
+        >
+          <Typography
+            sx={{
+              color: premiumColors.white,
+              fontSize: '0.95rem',
+              mb: 2,
+              fontWeight: 500
+            }}
+          >
+            Êtes-vous sûr de vouloir supprimer cette commande ?
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                bgcolor: alpha(premiumColors.gold, 0.1),
+                color: premiumColors.gold,
+                width: 48,
+                height: 48,
+                borderRadius: 1.5
+              }}
+            >
+              <Store />
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  color: premiumColors.gold,
+                  fontFamily: "'Fjalla One', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '1rem'
+                }}
+              >
+                {order.orderNumber}
+              </Typography>
+              <Typography
+                sx={{
+                  color: premiumColors.textSecondary,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mt: 0.25
+                }}
+              >
+                <Person sx={{ fontSize: '0.8rem' }} />
+                {order.customer?.fullName}
+              </Typography>
+              <Typography
+                sx={{
+                  color: premiumColors.textMuted,
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mt: 0.25
+                }}
+              >
+                <AttachMoney sx={{ fontSize: '0.8rem' }} />
+                {order.total?.toFixed(2)} DT
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: alpha(premiumColors.error, 0.05),
+            borderRadius: 2,
+            border: `1px solid ${alpha(premiumColors.error, 0.15)}`
+          }}
+        >
+          <Typography
+            sx={{
+              color: premiumColors.error,
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <Info sx={{ fontSize: '1rem' }} />
+            Cette commande sera définitivement supprimée de la base de données
+          </Typography>
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 3, pt: 0, gap: 2 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={onClose}
+          sx={{
+            color: premiumColors.textSecondary,
+            borderColor: alpha(premiumColors.gold, 0.3),
+            borderWidth: 1.5,
+            py: 1.25,
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: 2,
+            '&:hover': {
+              borderColor: premiumColors.gold,
+              bgcolor: alpha(premiumColors.gold, 0.05),
+              color: premiumColors.white
+            }
+          }}
+        >
+          Annuler
+        </Button>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => {
+            onConfirm(order._id);
+            onClose();
+          }}
+          sx={{
+            bgcolor: premiumColors.cancelled,
+            color: premiumColors.white,
+            py: 1.25,
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            textTransform: 'none',
+            borderRadius: 2,
+            boxShadow: `0 8px 16px -4px ${alpha(premiumColors.cancelled, 0.3)}`,
+            '&:hover': {
+              bgcolor: '#dc2626',
+              transform: 'translateY(-2px)',
+              boxShadow: `0 12px 20px -8px ${alpha(premiumColors.cancelled, 0.4)}`
+            },
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        >
+          Supprimer définitivement
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// ============ ORDER CARD COMPONENT - BLACK CARD WITH DELETE ICON ============
+const OrderCard = ({ order, onView, onStatusUpdate, onDelete }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const status = statusConfig[order.status] || statusConfig.pending;
+  const userRole = localStorage.getItem('userRole');
 
-  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+  
   const handleMenuClose = () => setAnchorEl(null);
   
   const handleStatusChange = (newStatus) => {
@@ -160,52 +514,65 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
     handleMenuClose();
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    onDelete(order);
+  };
+
   return (
-    <Zoom in timeout={500}>
+    <Zoom in timeout={400}>
       <Paper
         elevation={0}
+        onClick={() => onView(order)}
         sx={{
-          p: 2,
+          p: 2.5,
           mb: 2,
-          background: `linear-gradient(135deg, ${premiumColors.noir} 0%, ${premiumColors.charcoal} 100%)`,
-          border: `1px solid ${premiumColors.gold}20`,
+          bgcolor: premiumColors.surface, // BLACK CARD
+          border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
           borderRadius: 3,
           position: 'relative',
           overflow: 'hidden',
+          cursor: 'pointer',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: `0 20px 40px ${premiumColors.gold}20`,
-            borderColor: premiumColors.gold + '40',
-            '& .order-number': {
-              color: premiumColors.gold
-            }
-          },
           '&::before': {
             content: '""',
             position: 'absolute',
             top: 0,
             left: 0,
-            width: '4px',
+            width: '6px',
             height: '100%',
-            background: status.color,
-            boxShadow: `0 0 20px ${status.color}`
+            background: `linear-gradient(180deg, ${status.color}, ${premiumColors.gold})`,
+            opacity: 0.8
+          },
+          '&:hover': {
+            transform: 'translateY(-4px) scale(1.01)',
+            boxShadow: premiumColors.shadowGold,
+            borderColor: alpha(premiumColors.gold, 0.3),
+            bgcolor: premiumColors.charcoal,
+            '& .order-number': {
+              color: premiumColors.gold
+            },
+            '& .view-button': {
+              bgcolor: alpha(premiumColors.gold, 0.2),
+              color: premiumColors.gold
+            }
           }
         }}
       >
         <Grid container spacing={2} alignItems="center">
           {/* Order Info */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2.5}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar
                 sx={{
-                  bgcolor: premiumColors.gold + '20',
+                  bgcolor: alpha(premiumColors.gold, 0.1),
                   color: premiumColors.gold,
-                  width: 48,
-                  height: 48
+                  width: 52,
+                  height: 52,
+                  borderRadius: 2
                 }}
               >
-                <ShoppingBag />
+                <Store />
               </Avatar>
               <Box>
                 <Typography
@@ -215,22 +582,22 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
                     fontFamily: "'Fjalla One', sans-serif",
                     fontSize: '1.1rem',
                     fontWeight: 700,
-                    transition: 'color 0.3s ease'
+                    transition: 'color 0.3s ease',
+                    mb: 0.5
                   }}
                 >
                   {order.orderNumber}
                 </Typography>
                 <Typography
                   sx={{
-                    color: premiumColors.goldLight,
-                    fontSize: '0.85rem',
+                    color: premiumColors.textMuted,
+                    fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
-                    mt: 0.5
+                    gap: 0.5
                   }}
                 >
-                  <CalendarToday sx={{ fontSize: '0.8rem' }} />
+                  <CalendarToday sx={{ fontSize: '0.7rem' }} />
                   {format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr })}
                 </Typography>
               </Box>
@@ -242,10 +609,11 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar
                 sx={{
-                  bgcolor: premiumColors.gold + '10',
+                  bgcolor: alpha(premiumColors.gold, 0.05),
                   color: premiumColors.gold,
-                  width: 40,
-                  height: 40
+                  width: 44,
+                  height: 44,
+                  borderRadius: 1.5
                 }}
               >
                 <Person />
@@ -254,35 +622,37 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
                 <Typography
                   sx={{
                     color: premiumColors.white,
-                    fontFamily: "'Fjalla One', sans-serif",
                     fontSize: '0.95rem',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    mb: 0.25
                   }}
                 >
                   {order.customer.fullName}
                 </Typography>
                 <Typography
                   sx={{
-                    color: premiumColors.goldLight + 'CC',
-                    fontSize: '0.8rem',
+                    color: premiumColors.textMuted,
+                    fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5
                   }}
                 >
-                  <Email sx={{ fontSize: '0.75rem' }} />
-                  {order.customer.email}
+                  <Email sx={{ fontSize: '0.7rem' }} />
+                  {order.customer.email.length > 20 
+                    ? `${order.customer.email.substring(0, 20)}...` 
+                    : order.customer.email}
                 </Typography>
                 <Typography
                   sx={{
-                    color: premiumColors.goldLight + 'CC',
-                    fontSize: '0.8rem',
+                    color: premiumColors.textMuted,
+                    fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5
                   }}
                 >
-                  <Phone sx={{ fontSize: '0.75rem' }} />
+                  <Phone sx={{ fontSize: '0.7rem' }} />
                   {order.customer.phone}
                 </Typography>
               </Box>
@@ -292,29 +662,35 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
           {/* Items & Amount */}
           <Grid item xs={12} md={2}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography
+              <Chip
+                label={`${order.items.length} article${order.items.length > 1 ? 's' : ''}`}
+                size="small"
                 sx={{
-                  color: premiumColors.white,
-                  fontSize: '0.9rem',
-                  mb: 0.5
+                  bgcolor: alpha(premiumColors.gold, 0.1),
+                  color: premiumColors.goldLight,
+                  fontSize: '0.7rem',
+                  height: 22,
+                  mb: 0.5,
+                  '& .MuiChip-label': { px: 1 }
                 }}
-              >
-                {order.items.length} article{order.items.length > 1 ? 's' : ''}
-              </Typography>
+              />
               <Typography
                 sx={{
                   color: premiumColors.gold,
                   fontFamily: "'Fjalla One', sans-serif",
-                  fontSize: '1.2rem',
-                  fontWeight: 700
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  lineHeight: 1.2
                 }}
               >
                 {order.total.toFixed(2)} DT
               </Typography>
               <Typography
                 sx={{
-                  color: premiumColors.goldLight + '80',
-                  fontSize: '0.75rem'
+                  color: premiumColors.textMuted,
+                  fontSize: '0.7rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
                 }}
               >
                 {order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 
@@ -324,89 +700,205 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
           </Grid>
 
           {/* Status & Actions */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
-              <Chip
-                icon={status.icon}
-                label={status.label}
+          <Grid item xs={12} md={4.5}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1.5 }}>
+              {/* Status Badge */}
+              <Badge
+                variant="dot"
                 sx={{
-                  bgcolor: status.bgColor,
-                  color: status.color,
-                  border: `1px solid ${status.color}40`,
-                  fontWeight: 600,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  '& .MuiChip-icon': { color: status.color }
+                  '& .MuiBadge-badge': {
+                    bgcolor: status.color,
+                    boxShadow: `0 0 0 2px ${alpha(status.color, 0.3)}`,
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    right: 8,
+                    top: 8
+                  }
                 }}
-              />
-              
-              <Tooltip title="Voir les détails">
-                <IconButton
-                  onClick={() => onView(order)}
+              >
+                <Chip
+                  icon={status.icon}
+                  label={status.label}
                   sx={{
-                    color: premiumColors.gold,
-                    bgcolor: premiumColors.gold + '10',
+                    bgcolor: status.bgColor,
+                    color: status.color,
+                    border: `1px solid ${alpha(status.color, 0.3)}`,
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    height: 32,
+                    '& .MuiChip-icon': { 
+                      color: status.iconColor,
+                      fontSize: '1rem'
+                    },
+                    '& .MuiChip-label': { px: 1.5 }
+                  }}
+                />
+              </Badge>
+
+              {/* View Button - ELEGANT */}
+              <Tooltip title="Voir les détails" arrow>
+                <IconButton
+                  className="view-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onView(order);
+                  }}
+                  sx={{
+                    color: premiumColors.textSecondary,
+                    bgcolor: alpha(premiumColors.gold, 0.08),
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      bgcolor: premiumColors.gold + '20',
-                      transform: 'scale(1.1)'
+                      bgcolor: alpha(premiumColors.gold, 0.2),
+                      color: premiumColors.gold,
+                      transform: 'scale(1.1)',
+                      boxShadow: `0 4px 12px ${alpha(premiumColors.gold, 0.3)}`
                     }
                   }}
                 >
-                  <Visibility />
+                  <Visibility fontSize="medium" />
                 </IconButton>
               </Tooltip>
 
+              {/* Status Update Button */}
               {status.next.length > 0 && (
                 <>
-                  <Tooltip title="Changer le statut">
-                    <IconButton
-                      onClick={handleMenuOpen}
-                      sx={{
-                        color: premiumColors.goldLight,
-                        bgcolor: premiumColors.gold + '10',
-                        '&:hover': {
-                          bgcolor: premiumColors.gold + '20',
-                          transform: 'scale(1.1)'
-                        }
-                      }}
-                    >
-                      <MoreVert />
-                    </IconButton>
-                  </Tooltip>
+                  <Button
+                    variant="contained"
+                    onClick={handleMenuOpen}
+                    endIcon={<MoreVert />}
+                    sx={{
+                      bgcolor: alpha(premiumColors.gold, 0.9),
+                      color: premiumColors.noir,
+                      px: 2.5,
+                      py: 0.75,
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      boxShadow: `0 6px 12px -4px ${alpha(premiumColors.gold, 0.4)}`,
+                      border: `1px solid ${alpha(premiumColors.gold, 0.5)}`,
+                      '&:hover': {
+                        bgcolor: premiumColors.gold,
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 12px 20px -8px ${alpha(premiumColors.gold, 0.6)}`,
+                        borderColor: premiumColors.gold
+                      },
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  >
+                    Mettre à jour
+                  </Button>
                   <Menu
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleMenuClose}
+                    onClick={(e) => e.stopPropagation()}
                     PaperProps={{
                       sx: {
-                        bgcolor: premiumColors.charcoal,
-                        border: `1px solid ${premiumColors.gold}40`,
+                        bgcolor: premiumColors.surface,
+                        border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
                         borderRadius: 2,
-                        mt: 1
+                        mt: 1.5,
+                        minWidth: 240,
+                        boxShadow: premiumColors.shadowLg
                       }
                     }}
                   >
+                    <Box sx={{ p: 1 }}>
+                      <Typography
+                        sx={{
+                          color: premiumColors.textMuted,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          px: 1.5,
+                          py: 1
+                        }}
+                      >
+                        Changer le statut
+                      </Typography>
+                    </Box>
                     {status.next.map((nextStatus) => (
                       <MenuItem
                         key={nextStatus}
                         onClick={() => handleStatusChange(nextStatus)}
                         sx={{
                           color: premiumColors.white,
+                          mx: 1,
+                          mb: 0.5,
+                          px: 1.5,
+                          py: 1.25,
+                          borderRadius: 1.5,
                           '&:hover': {
-                            bgcolor: premiumColors.gold + '20'
+                            bgcolor: statusConfig[nextStatus].bgColor
                           }
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {statusConfig[nextStatus].icon}
-                          <Typography sx={{ fontFamily: "'Fjalla One', sans-serif" }}>
-                            {statusConfig[nextStatus].label}
-                          </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(statusConfig[nextStatus].color, 0.15),
+                              color: statusConfig[nextStatus].color,
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1
+                            }}
+                          >
+                            {statusConfig[nextStatus].icon}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '0.9rem',
+                                color: statusConfig[nextStatus].color
+                              }}
+                            >
+                              {statusConfig[nextStatus].label}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.7rem',
+                                color: premiumColors.textMuted
+                              }}
+                            >
+                              Cliquer pour confirmer
+                            </Typography>
+                          </Box>
                         </Box>
                       </MenuItem>
                     ))}
                   </Menu>
                 </>
               )}
+
+              {/* DELETE ICON - ALWAYS VISIBLE FOR ALL USERS */}
+              <Tooltip title="Supprimer la commande" arrow>
+                <IconButton
+                  onClick={handleDeleteClick}
+                  sx={{
+                    color: alpha(premiumColors.cancelled, 0.7),
+                    bgcolor: alpha(premiumColors.cancelled, 0.08),
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: alpha(premiumColors.cancelled, 0.15),
+                      color: premiumColors.cancelled,
+                      transform: 'scale(1.1)',
+                      boxShadow: `0 4px 12px ${alpha(premiumColors.cancelled, 0.3)}`
+                    }
+                  }}
+                >
+                  <Delete fontSize="medium" />
+                </IconButton>
+              </Tooltip>
             </Box>
           </Grid>
         </Grid>
@@ -415,19 +907,29 @@ const OrderCard = ({ order, onView, onStatusUpdate }) => {
   );
 };
 
-// ============ ORDER DETAILS MODAL ============
-const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
+// ============ REDESIGNED ORDER DETAILS MODAL - CLEAN & PROFESSIONAL ============
+const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate, onDelete }) => {
   const [statusAnchorEl, setStatusAnchorEl] = useState(null);
+  const userRole = localStorage.getItem('userRole');
+  
   if (!order) return null;
 
   const status = statusConfig[order.status] || statusConfig.pending;
 
-  const handleStatusMenuOpen = (event) => setStatusAnchorEl(event.currentTarget);
+  const handleStatusMenuOpen = (event) => {
+    event.stopPropagation();
+    setStatusAnchorEl(event.currentTarget);
+  };
+  
   const handleStatusMenuClose = () => setStatusAnchorEl(null);
   
   const handleStatusChange = (newStatus) => {
     onStatusUpdate(order._id, newStatus);
     handleStatusMenuClose();
+  };
+
+  const handleDeleteClick = () => {
+    onDelete(order);
   };
 
   return (
@@ -438,61 +940,98 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: premiumColors.noir,
-          backgroundImage: `linear-gradient(135deg, ${premiumColors.noir}DD, ${premiumColors.charcoal}DD)`,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${premiumColors.gold}40`,
+          bgcolor: premiumColors.surface, // BLACK CARD
+          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
           borderRadius: 3,
-          boxShadow: `0 30px 90px ${premiumColors.gold}20`
+          boxShadow: premiumColors.shadowXl
         }
       }}
     >
+      {/* CLEAN HEADER WITH GOLD ACCENTS */}
       <DialogTitle sx={{ 
-        borderBottom: `1px solid ${premiumColors.gold}30`,
-        pb: 2
+        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
+        p: 3
       }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <Avatar
               sx={{
-                bgcolor: premiumColors.gold + '20',
+                bgcolor: alpha(premiumColors.gold, 0.1),
                 color: premiumColors.gold,
                 width: 56,
-                height: 56
+                height: 56,
+                borderRadius: 2
               }}
             >
-              <Receipt />
+              <Receipt sx={{ fontSize: '1.8rem' }} />
             </Avatar>
             <Box>
               <Typography
                 variant="h5"
                 sx={{
-                  color: premiumColors.gold,
+                  color: premiumColors.white,
                   fontFamily: "'Fjalla One', sans-serif",
-                  fontWeight: 700
+                  fontWeight: 700,
+                  mb: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
                 }}
               >
-                Commande {order.orderNumber}
+                {order.orderNumber}
+                <Chip
+                  icon={status.icon}
+                  label={status.label}
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    bgcolor: status.bgColor,
+                    color: status.color,
+                    border: `1px solid ${alpha(status.color, 0.3)}`,
+                    height: 24,
+                    '& .MuiChip-icon': { fontSize: '0.8rem' }
+                  }}
+                />
               </Typography>
-              <Typography
-                sx={{
-                  color: premiumColors.goldLight,
-                  fontSize: '0.9rem'
-                }}
-              >
-                Créée le {format(new Date(order.createdAt), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-              </Typography>
+              <Box sx={{ display: 'flex', gap: 3 }}>
+                <Typography
+                  sx={{
+                    color: premiumColors.textMuted,
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5
+                  }}
+                >
+                  <CalendarToday sx={{ fontSize: '0.8rem' }} />
+                  {format(new Date(order.createdAt), 'dd MMMM yyyy', { locale: fr })}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: premiumColors.textMuted,
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5
+                  }}
+                >
+                  <AccessTime sx={{ fontSize: '0.8rem' }} />
+                  {format(new Date(order.createdAt), 'HH:mm', { locale: fr })}
+                </Typography>
+              </Box>
             </Box>
           </Box>
           <IconButton
             onClick={onClose}
             sx={{
-              color: premiumColors.goldLight,
+              color: premiumColors.textMuted,
+              bgcolor: alpha(premiumColors.gold, 0.05),
+              width: 40,
+              height: 40,
               '&:hover': {
-                color: premiumColors.gold,
-                transform: 'rotate(90deg)'
-              },
-              transition: 'all 0.3s ease'
+                bgcolor: alpha(premiumColors.gold, 0.15),
+                color: premiumColors.gold
+              }
             }}
           >
             <Close />
@@ -500,16 +1039,16 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ py: 3 }}>
-        <Grid container spacing={3}>
-          {/* Status Card */}
-          <Grid item xs={12}>
+      <DialogContent sx={{ p: 3 }}>
+        {/* STATUS UPDATE SECTION - CLEAN */}
+        {status.next.length > 0 && (
+          <Box sx={{ mb: 3 }}>
             <Paper
               elevation={0}
               sx={{
                 p: 2,
-                bgcolor: premiumColors.charcoal + '80',
-                border: `1px solid ${status.color}40`,
+                bgcolor: alpha(premiumColors.surfaceLight, 0.7),
+                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -517,100 +1056,153 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
+                <Box
                   sx={{
-                    bgcolor: status.bgColor,
-                    color: status.color,
-                    width: 48,
-                    height: 48
+                    width: 4,
+                    height: 40,
+                    bgcolor: premiumColors.gold,
+                    borderRadius: 2
                   }}
-                >
-                  {status.icon}
-                </Avatar>
+                />
                 <Box>
                   <Typography
                     sx={{
-                      color: premiumColors.white,
-                      fontSize: '0.9rem'
+                      color: premiumColors.textMuted,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px'
                     }}
                   >
-                    Statut actuel
+                    Action requise
                   </Typography>
                   <Typography
                     sx={{
-                      color: status.color,
-                      fontFamily: "'Fjalla One', sans-serif",
-                      fontSize: '1.2rem',
-                      fontWeight: 700
+                      color: premiumColors.white,
+                      fontSize: '0.9rem',
+                      fontWeight: 500
                     }}
                   >
-                    {status.label}
+                    Mettre à jour le statut de cette commande
                   </Typography>
                 </Box>
               </Box>
-              
-              {status.next.length > 0 && (
-                <>
-                  <Button
-                    variant="outlined"
-                    onClick={handleStatusMenuOpen}
-                    endIcon={<MoreVert />}
+              <Button
+                variant="contained"
+                onClick={handleStatusMenuOpen}
+                endIcon={<MoreVert />}
+                sx={{
+                  bgcolor: premiumColors.gold,
+                  color: premiumColors.noir,
+                  px: 3,
+                  py: 1,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  '&:hover': {
+                    bgcolor: premiumColors.goldDark,
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 8px 16px -4px ${alpha(premiumColors.gold, 0.4)}`
+                  }
+                }}
+              >
+                Mettre à jour
+              </Button>
+              <Menu
+                anchorEl={statusAnchorEl}
+                open={Boolean(statusAnchorEl)}
+                onClose={handleStatusMenuClose}
+                PaperProps={{
+                  sx: {
+                    bgcolor: premiumColors.surface,
+                    border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                    borderRadius: 2,
+                    mt: 1,
+                    minWidth: 260,
+                    boxShadow: premiumColors.shadowLg
+                  }
+                }}
+              >
+                <Box sx={{ p: 1 }}>
+                  <Typography
                     sx={{
-                      color: premiumColors.gold,
-                      borderColor: premiumColors.gold + '60',
+                      color: premiumColors.textMuted,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      px: 2,
+                      py: 1
+                    }}
+                  >
+                    Nouveau statut
+                  </Typography>
+                </Box>
+                {status.next.map((nextStatus) => (
+                  <MenuItem
+                    key={nextStatus}
+                    onClick={() => handleStatusChange(nextStatus)}
+                    sx={{
+                      mx: 1,
+                      mb: 0.5,
+                      px: 2,
+                      py: 1.5,
+                      borderRadius: 1.5,
                       '&:hover': {
-                        borderColor: premiumColors.gold,
-                        bgcolor: premiumColors.gold + '10'
+                        bgcolor: statusConfig[nextStatus].bgColor
                       }
                     }}
                   >
-                    Mettre à jour
-                  </Button>
-                  <Menu
-                    anchorEl={statusAnchorEl}
-                    open={Boolean(statusAnchorEl)}
-                    onClose={handleStatusMenuClose}
-                    PaperProps={{
-                      sx: {
-                        bgcolor: premiumColors.charcoal,
-                        border: `1px solid ${premiumColors.gold}40`,
-                        borderRadius: 2
-                      }
-                    }}
-                  >
-                    {status.next.map((nextStatus) => (
-                      <MenuItem
-                        key={nextStatus}
-                        onClick={() => handleStatusChange(nextStatus)}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar
                         sx={{
-                          color: premiumColors.white,
-                          '&:hover': {
-                            bgcolor: premiumColors.gold + '20'
-                          }
+                          bgcolor: alpha(statusConfig[nextStatus].color, 0.1),
+                          color: statusConfig[nextStatus].color,
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {statusConfig[nextStatus].icon}
-                          <Typography sx={{ fontFamily: "'Fjalla One', sans-serif" }}>
-                            {statusConfig[nextStatus].label}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </>
-              )}
+                        {statusConfig[nextStatus].icon}
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          sx={{
+                            color: premiumColors.white,
+                            fontWeight: 600,
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          {statusConfig[nextStatus].label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: premiumColors.textMuted,
+                            fontSize: '0.7rem'
+                          }}
+                        >
+                          Cliquez pour confirmer
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Menu>
             </Paper>
-          </Grid>
+          </Box>
+        )}
 
-          {/* Customer Information */}
+        {/* TWO COLUMN LAYOUT - CLEAN & ORGANIZED */}
+        <Grid container spacing={3}>
+          {/* LEFT COLUMN - CUSTOMER INFO */}
           <Grid item xs={12} md={6}>
             <Paper
               elevation={0}
               sx={{
                 p: 3,
-                bgcolor: premiumColors.charcoal + '80',
-                border: `1px solid ${premiumColors.gold}20`,
+                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
+                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
                 borderRadius: 2,
                 height: '100%'
               }}
@@ -618,95 +1210,146 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
               <Typography
                 sx={{
                   color: premiumColors.gold,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontSize: '1.1rem',
+                  fontSize: '0.9rem',
                   fontWeight: 700,
-                  mb: 2,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  mb: 3,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1
                 }}
               >
-                <Person /> Informations client
+                <Person sx={{ fontSize: '1rem' }} />
+                INFORMATIONS CLIENT
               </Typography>
               
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    color: premiumColors.gold,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    fontSize: '1.3rem',
+                    fontWeight: 700
+                  }}
+                >
+                  {order.customer.fullName.charAt(0)}
+                </Avatar>
+                <Box>
+                  <Typography
                     sx={{
-                      bgcolor: premiumColors.gold + '20',
-                      color: premiumColors.gold,
-                      width: 56,
-                      height: 56
+                      color: premiumColors.white,
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      mb: 0.5
                     }}
                   >
-                    {order.customer.fullName.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography
+                    {order.customer.fullName}
+                  </Typography>
+                  {order.customer.clothingSize && (
+                    <Chip
+                      label={`Taille: ${order.customer.clothingSize}`}
+                      size="small"
                       sx={{
-                        color: premiumColors.white,
-                        fontFamily: "'Fjalla One', sans-serif",
-                        fontSize: '1.2rem',
-                        fontWeight: 700
-                      }}
-                    >
-                      {order.customer.fullName}
-                    </Typography>
-                    <Typography
-                      sx={{
+                        bgcolor: alpha(premiumColors.gold, 0.1),
                         color: premiumColors.goldLight,
-                        fontSize: '0.9rem'
+                        height: 24,
+                        fontSize: '0.7rem'
                       }}
-                    >
-                      {order.customer.clothingSize && `Taille: ${order.customer.clothingSize}`}
+                    />
+                  )}
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: alpha(premiumColors.info, 0.1),
+                      color: premiumColors.info,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1
+                    }}
+                  >
+                    <Email sx={{ fontSize: '0.9rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>
+                      Email
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.9rem' }}>
+                      {order.customer.email}
                     </Typography>
                   </Box>
                 </Box>
 
-                <Divider sx={{ borderColor: premiumColors.gold + '20' }} />
-
-                <Box sx={{ display: 'grid', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Email sx={{ color: premiumColors.gold, fontSize: '1.2rem' }} />
-                    <Typography sx={{ color: premiumColors.white }}>
-                      {order.customer.email}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: alpha(premiumColors.success, 0.1),
+                      color: premiumColors.success,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1
+                    }}
+                  >
+                    <Phone sx={{ fontSize: '0.9rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>
+                      Téléphone
                     </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Phone sx={{ color: premiumColors.gold, fontSize: '1.2rem' }} />
-                    <Typography sx={{ color: premiumColors.white }}>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.9rem' }}>
                       {order.customer.phone}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocationOn sx={{ color: premiumColors.gold, fontSize: '1.2rem' }} />
-                    <Typography sx={{ color: premiumColors.white }}>
-                      {order.customer.address}, {order.customer.city}
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: alpha(premiumColors.warning, 0.1),
+                      color: premiumColors.warning,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1
+                    }}
+                  >
+                    <LocationOn sx={{ fontSize: '0.9rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>
+                      Adresse
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.9rem' }}>
+                      {order.customer.address}
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem' }}>
+                      {order.customer.city}
                       {order.customer.postalCode && `, ${order.customer.postalCode}`}
-                      {order.customer.country && `, ${order.customer.country}`}
                     </Typography>
                   </Box>
                 </Box>
 
                 {order.customer.notes && (
                   <>
-                    <Divider sx={{ borderColor: premiumColors.gold + '20' }} />
+                    <Divider sx={{ borderColor: alpha(premiumColors.gold, 0.1), my: 1 }} />
                     <Box>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight,
-                          fontSize: '0.9rem',
-                          mb: 0.5
-                        }}
-                      >
-                        Notes:
+                      <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.5 }}>
+                        Notes client
                       </Typography>
                       <Typography
                         sx={{
-                          color: premiumColors.white,
-                          fontSize: '0.95rem',
-                          fontStyle: 'italic'
+                          color: premiumColors.textSecondary,
+                          fontSize: '0.85rem',
+                          fontStyle: 'italic',
+                          p: 1.5,
+                          bgcolor: alpha(premiumColors.gold, 0.03),
+                          borderRadius: 1.5
                         }}
                       >
                         "{order.customer.notes}"
@@ -718,14 +1361,14 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
             </Paper>
           </Grid>
 
-          {/* Order Summary */}
+          {/* RIGHT COLUMN - ORDER SUMMARY */}
           <Grid item xs={12} md={6}>
             <Paper
               elevation={0}
               sx={{
                 p: 3,
-                bgcolor: premiumColors.charcoal + '80',
-                border: `1px solid ${premiumColors.gold}20`,
+                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
+                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
                 borderRadius: 2,
                 height: '100%'
               }}
@@ -733,194 +1376,289 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
               <Typography
                 sx={{
                   color: premiumColors.gold,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontSize: '1.1rem',
+                  fontSize: '0.9rem',
                   fontWeight: 700,
-                  mb: 2,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  mb: 3,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1
                 }}
               >
-                <Receipt /> Récapitulatif
+                <Receipt sx={{ fontSize: '1rem' }} />
+                RÉCAPITULATIF
               </Typography>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography sx={{ color: premiumColors.goldLight }}>Sous-total</Typography>
-                  <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                    {order.subtotal.toFixed(2)} DT
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography sx={{ color: premiumColors.goldLight }}>Livraison</Typography>
-                  <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                    {order.shippingCost.toFixed(2)} DT
-                  </Typography>
-                </Box>
-                {order.tax > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography sx={{ color: premiumColors.goldLight }}>TVA</Typography>
-                    <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                      {order.tax.toFixed(2)} DT
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {/* Payment Method */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: alpha(premiumColors.gold, 0.1),
+                      color: premiumColors.gold,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1.5
+                    }}
+                  >
+                    <Payment sx={{ fontSize: '1.1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>
+                      Mode de paiement
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem', fontWeight: 600 }}>
+                      {order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 
+                       order.paymentMethod === 'card' ? 'Carte bancaire' : 'Virement bancaire'}
                     </Typography>
                   </Box>
-                )}
-                <Divider sx={{ borderColor: premiumColors.gold + '20' }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography
-                    sx={{
-                      color: premiumColors.gold,
-                      fontFamily: "'Fjalla One', sans-serif",
-                      fontSize: '1.1rem',
-                      fontWeight: 700
-                    }}
-                  >
-                    Total
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: premiumColors.gold,
-                      fontFamily: "'Fjalla One', sans-serif",
-                      fontSize: '1.3rem',
-                      fontWeight: 800
-                    }}
-                  >
-                    {order.total.toFixed(2)} DT
-                  </Typography>
                 </Box>
 
-                <Box
-                  sx={{
-                    mt: 2,
-                    p: 2,
-                    bgcolor: premiumColors.gold + '10',
-                    borderRadius: 2,
-                    border: `1px solid ${premiumColors.gold}30`
-                  }}
-                >
-                  <Typography
+                <Divider sx={{ borderColor: alpha(premiumColors.gold, 0.1) }} />
+
+                {/* Amount Details */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>
+                      Sous-total
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>
+                      {order.subtotal?.toFixed(2)} DT
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>
+                      Livraison
+                    </Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>
+                      {order.shippingCost?.toFixed(2)} DT
+                    </Typography>
+                  </Box>
+                  {order.tax > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>
+                        TVA
+                      </Typography>
+                      <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>
+                        {order.tax?.toFixed(2)} DT
+                      </Typography>
+                    </Box>
+                  )}
+                  
+                  <Box
                     sx={{
-                      color: premiumColors.goldLight,
-                      fontSize: '0.9rem',
-                      mb: 0.5
-                    }}
-                  >
-                    Mode de paiement
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: premiumColors.white,
-                      fontFamily: "'Fjalla One', sans-serif",
-                      fontSize: '1rem',
-                      fontWeight: 600,
+                      mt: 1,
+                      pt: 2,
+                      borderTop: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 1
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
                     }}
                   >
-                    <Payment sx={{ color: premiumColors.gold }} />
-                    {order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 
-                     order.paymentMethod === 'card' ? 'Carte bancaire' : 'Virement bancaire'}
-                  </Typography>
+                    <Typography
+                      sx={{
+                        color: premiumColors.white,
+                        fontSize: '1rem',
+                        fontWeight: 700
+                      }}
+                    >
+                      TOTAL
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: premiumColors.gold,
+                        fontFamily: "'Fjalla One', sans-serif",
+                        fontSize: '1.6rem',
+                        fontWeight: 800,
+                        lineHeight: 1
+                      }}
+                    >
+                      {order.total?.toFixed(2)} DT
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </Paper>
           </Grid>
 
-          {/* Products List */}
+          {/* BOTTOM - PRODUCTS TABLE - CLEAN DESIGN */}
           <Grid item xs={12}>
             <Paper
               elevation={0}
               sx={{
                 p: 3,
-                bgcolor: premiumColors.charcoal + '80',
-                border: `1px solid ${premiumColors.gold}20`,
+                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
+                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
                 borderRadius: 2
               }}
             >
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <ShoppingBag /> Articles ({order.items.length})
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Typography
+                  sx={{
+                    color: premiumColors.gold,
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <ShoppingBag sx={{ fontSize: '1rem' }} />
+                  ARTICLES COMMANDÉS
+                </Typography>
+                <Chip
+                  label={`${order.items.length} article${order.items.length > 1 ? 's' : ''} • ${order.items.reduce((acc, item) => acc + item.quantity, 0)} pièces`}
+                  sx={{
+                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    color: premiumColors.goldLight,
+                    height: 28,
+                    fontSize: '0.75rem',
+                    fontWeight: 600
+                  }}
+                />
+              </Box>
 
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ color: premiumColors.goldLight, borderBottom: `1px solid ${premiumColors.gold}30` }}>Produit</TableCell>
-                      <TableCell sx={{ color: premiumColors.goldLight, borderBottom: `1px solid ${premiumColors.gold}30` }}>Variante</TableCell>
-                      <TableCell align="center" sx={{ color: premiumColors.goldLight, borderBottom: `1px solid ${premiumColors.gold}30` }}>Quantité</TableCell>
-                      <TableCell align="right" sx={{ color: premiumColors.goldLight, borderBottom: `1px solid ${premiumColors.gold}30` }}>Prix unitaire</TableCell>
-                      <TableCell align="right" sx={{ color: premiumColors.goldLight, borderBottom: `1px solid ${premiumColors.gold}30` }}>Total</TableCell>
+                      <TableCell sx={{ 
+                        color: premiumColors.textMuted, 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                        py: 1.5
+                      }}>
+                        Produit
+                      </TableCell>
+                      <TableCell sx={{ 
+                        color: premiumColors.textMuted, 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                        py: 1.5
+                      }}>
+                        Variante
+                      </TableCell>
+                      <TableCell align="center" sx={{ 
+                        color: premiumColors.textMuted, 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                        py: 1.5
+                      }}>
+                        Qté
+                      </TableCell>
+                      <TableCell align="right" sx={{ 
+                        color: premiumColors.textMuted, 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                        py: 1.5
+                      }}>
+                        Prix unitaire
+                      </TableCell>
+                      <TableCell align="right" sx={{ 
+                        color: premiumColors.textMuted, 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                        py: 1.5
+                      }}>
+                        Total
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {order.items.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell sx={{ borderBottom: `1px solid ${premiumColors.gold}20` }}>
+                        <TableCell sx={{ 
+                          borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
+                          py: 2
+                        }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             {item.mainImage && (
                               <Avatar
                                 src={typeof item.mainImage === 'string' ? item.mainImage : item.mainImage?.url}
                                 variant="rounded"
                                 sx={{
-                                  width: 50,
-                                  height: 50,
-                                  border: `1px solid ${premiumColors.gold}30`
+                                  width: 48,
+                                  height: 48,
+                                  border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                                  borderRadius: 1.5
                                 }}
                               />
                             )}
-                            <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
+                            <Typography sx={{ 
+                              color: premiumColors.white, 
+                              fontWeight: 600, 
+                              fontSize: '0.9rem' 
+                            }}>
                               {item.name}
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ borderBottom: `1px solid ${premiumColors.gold}20` }}>
-                          {item.selectedSize && (
-                            <Chip
-                              label={`Taille: ${item.selectedSize}`}
-                              size="small"
-                              sx={{
-                                bgcolor: premiumColors.gold + '10',
-                                color: premiumColors.gold,
-                                mr: 1
-                              }}
-                            />
-                          )}
-                          {item.selectedColor && (
-                            <Chip
-                              label={`Couleur: ${item.selectedColor}`}
-                              size="small"
-                              sx={{
-                                bgcolor: premiumColors.gold + '10',
-                                color: premiumColors.gold
-                              }}
-                            />
-                          )}
+                        <TableCell sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            {item.selectedSize && (
+                              <Chip
+                                label={item.selectedSize}
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(premiumColors.gold, 0.1),
+                                  color: premiumColors.gold,
+                                  fontSize: '0.7rem',
+                                  height: 24
+                                }}
+                              />
+                            )}
+                            {item.selectedColor && (
+                              <Chip
+                                label={item.selectedColor}
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(premiumColors.gold, 0.1),
+                                  color: premiumColors.gold,
+                                  fontSize: '0.7rem',
+                                  height: 24
+                                }}
+                              />
+                            )}
+                          </Box>
                         </TableCell>
-                        <TableCell align="center" sx={{ borderBottom: `1px solid ${premiumColors.gold}20` }}>
-                          <Typography sx={{ color: premiumColors.white }}>
+                        <TableCell align="center" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
+                          <Typography sx={{ 
+                            color: premiumColors.white, 
+                            fontWeight: 700,
+                            fontSize: '0.95rem'
+                          }}>
                             {item.quantity}
                           </Typography>
                         </TableCell>
-                        <TableCell align="right" sx={{ borderBottom: `1px solid ${premiumColors.gold}20` }}>
-                          <Typography sx={{ color: premiumColors.white }}>
-                            {item.price.toFixed(2)} DT
+                        <TableCell align="right" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
+                          <Typography sx={{ color: premiumColors.textSecondary, fontSize: '0.9rem' }}>
+                            {item.price?.toFixed(2)} DT
                           </Typography>
                         </TableCell>
-                        <TableCell align="right" sx={{ borderBottom: `1px solid ${premiumColors.gold}20` }}>
-                          <Typography sx={{ color: premiumColors.gold, fontWeight: 700 }}>
+                        <TableCell align="right" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
+                          <Typography sx={{ 
+                            color: premiumColors.gold, 
+                            fontWeight: 700,
+                            fontSize: '0.95rem'
+                          }}>
                             {(item.price * item.quantity).toFixed(2)} DT
                           </Typography>
                         </TableCell>
@@ -934,53 +1672,64 @@ const OrderDetailsModal = ({ open, onClose, order, onStatusUpdate }) => {
         </Grid>
       </DialogContent>
 
+      {/* CLEAN FOOTER ACTIONS */}
       <DialogActions sx={{ 
-        borderTop: `1px solid ${premiumColors.gold}30`,
-        p: 2,
-        gap: 2
+        borderTop: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
+        p: 3,
+        display: 'flex',
+        justifyContent: 'space-between'
       }}>
-        <Button
-          variant="outlined"
-          startIcon={<Print />}
-          sx={{
-            color: premiumColors.goldLight,
-            borderColor: premiumColors.gold + '60',
-            '&:hover': {
-              borderColor: premiumColors.gold,
-              bgcolor: premiumColors.gold + '10'
-            }
-          }}
-        >
-          Imprimer
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<CloudDownload />}
-          sx={{
-            color: premiumColors.goldLight,
-            borderColor: premiumColors.gold + '60',
-            '&:hover': {
-              borderColor: premiumColors.gold,
-              bgcolor: premiumColors.gold + '10'
-            }
-          }}
-        >
-          Télécharger PDF
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onClose}
-          sx={{
-            bgcolor: premiumColors.gold,
-            color: premiumColors.noir,
-            '&:hover': {
-              bgcolor: premiumColors.goldLight,
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          Fermer
-        </Button>
+        <Box>
+          {/* DELETE BUTTON IN MODAL - ALWAYS VISIBLE FOR ALL USERS */}
+          <Button
+            variant="outlined"
+            onClick={handleDeleteClick}
+            startIcon={<Delete />}
+            sx={{
+              color: premiumColors.cancelled,
+              borderColor: alpha(premiumColors.cancelled, 0.3),
+              borderWidth: 1.5,
+              px: 3,
+              py: 1,
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: 2,
+              '&:hover': {
+                borderColor: premiumColors.cancelled,
+                bgcolor: alpha(premiumColors.cancelled, 0.1),
+                transform: 'translateY(-2px)',
+                boxShadow: `0 8px 16px -4px ${alpha(premiumColors.cancelled, 0.2)}`
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Supprimer
+          </Button>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            onClick={onClose}
+            sx={{
+              bgcolor: premiumColors.gold,
+              color: premiumColors.noir,
+              px: 4,
+              py: 1,
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              textTransform: 'none',
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: premiumColors.goldDark,
+                transform: 'translateY(-2px)',
+                boxShadow: `0 8px 16px -4px ${alpha(premiumColors.gold, 0.4)}`
+              }
+            }}
+          >
+            Fermer
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
@@ -993,6 +1742,8 @@ const Order = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState([]);
   const [dateFilter, setDateFilter] = useState(null);
@@ -1013,15 +1764,13 @@ const Order = () => {
     revenue: 0
   });
 
-  // Fetch orders
+  // ============ API FUNCTIONS ============
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/orders`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       
@@ -1038,17 +1787,13 @@ const Order = () => {
     }
   };
 
-  // Fetch single order by ID
   const fetchOrderById = async (id) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/orders/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      
       if (data.success) {
         setSelectedOrder(data.data);
         setDetailsOpen(true);
@@ -1059,28 +1804,6 @@ const Order = () => {
     }
   };
 
-  // Fetch order by order number
-  const fetchOrderByNumber = async (orderNumber) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/orders/number/${orderNumber}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setSelectedOrder(data.data);
-        setDetailsOpen(true);
-      }
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      showSnackbar('Commande non trouvée', 'error');
-    }
-  };
-
-  // Update order status
   const updateOrderStatus = async (id, newStatus) => {
     try {
       const token = localStorage.getItem('token');
@@ -1096,7 +1819,6 @@ const Order = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Update orders list
         const updatedOrders = orders.map(order => 
           order._id === id ? { ...order, status: newStatus } : order
         );
@@ -1104,7 +1826,6 @@ const Order = () => {
         applyFilters(updatedOrders);
         calculateStats(updatedOrders);
         
-        // Update selected order if open
         if (selectedOrder && selectedOrder._id === id) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
         }
@@ -1117,7 +1838,39 @@ const Order = () => {
     }
   };
 
-  // Calculate statistics
+  // ============ DELETE ORDER FUNCTION ============
+  const deleteOrder = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/orders/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const updatedOrders = orders.filter(order => order._id !== id);
+        setOrders(updatedOrders);
+        applyFilters(updatedOrders);
+        calculateStats(updatedOrders);
+        
+        if (selectedOrder && selectedOrder._id === id) {
+          setDetailsOpen(false);
+          setSelectedOrder(null);
+        }
+        
+        showSnackbar('Commande supprimée avec succès', 'success');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      showSnackbar('Erreur lors de la suppression de la commande', 'error');
+    }
+  };
+
+  // ============ UTILITY FUNCTIONS ============
   const calculateStats = (ordersData) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1139,11 +1892,9 @@ const Order = () => {
     setStats(stats);
   };
 
-  // Apply filters
   const applyFilters = (ordersData) => {
     let filtered = [...ordersData];
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(order => 
         order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1153,12 +1904,10 @@ const Order = () => {
       );
     }
 
-    // Status filter
     if (statusFilter.length > 0) {
       filtered = filtered.filter(order => statusFilter.includes(order.status));
     }
 
-    // Date filter
     if (dateFilter) {
       const filterDate = new Date(dateFilter).setHours(0, 0, 0, 0);
       filtered = filtered.filter(order => {
@@ -1167,7 +1916,6 @@ const Order = () => {
       });
     }
 
-    // Sort
     filtered.sort((a, b) => {
       let valA = a[sortBy];
       let valB = b[sortBy];
@@ -1181,33 +1929,39 @@ const Order = () => {
         valB = parseFloat(valB);
       }
       
-      if (sortOrder === 'asc') {
-        return valA > valB ? 1 : -1;
-      } else {
-        return valA < valB ? 1 : -1;
-      }
+      return sortOrder === 'asc' ? valA - valB : valB - valA;
     });
 
     setFilteredOrders(filtered);
   };
 
-  // Show snackbar
+  const getStatusCount = (status) => {
+    return orders.filter(o => o.status === status).length;
+  };
+
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Handle view order
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
     setDetailsOpen(true);
   };
 
-  // Handle status filter change
+  const handleDeleteClick = (order) => {
+    setOrderToDelete(order);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = (id) => {
+    deleteOrder(id);
+    setOrderToDelete(null);
+  };
+
   const handleStatusFilterChange = (event) => {
     setStatusFilter(event.target.value);
   };
 
-  // Handle sort
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -1217,15 +1971,13 @@ const Order = () => {
     }
   };
 
-  // Refresh data
   const handleRefresh = () => {
     fetchOrders();
     showSnackbar('Données actualisées', 'success');
   };
 
-  // Export to CSV
   const exportToCSV = () => {
-    const headers = ['Order Number', 'Date', 'Customer', 'Email', 'Phone', 'Total', 'Status', 'Payment'];
+    const headers = ['Numéro', 'Date', 'Client', 'Email', 'Téléphone', 'Total', 'Statut', 'Paiement'];
     const data = filteredOrders.map(order => [
       order.orderNumber,
       format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm'),
@@ -1234,7 +1986,8 @@ const Order = () => {
       order.customer.phone,
       order.total.toFixed(2),
       statusConfig[order.status]?.label || order.status,
-      order.paymentMethod
+      order.paymentMethod === 'cash' ? 'Paiement livraison' : 
+      order.paymentMethod === 'card' ? 'Carte' : 'Virement'
     ]);
     
     const csv = [headers, ...data].map(row => row.join(',')).join('\n');
@@ -1242,712 +1995,576 @@ const Order = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `orders_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.download = `commandes_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
     a.click();
     
     showSnackbar('Export CSV réussi', 'success');
   };
 
-  // Export to PDF (simulated)
-  const exportToPDF = () => {
-    showSnackbar('Export PDF démarré', 'info');
-    // PDF generation would go here
-  };
-
-  // Load orders on mount
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // Apply filters when filter criteria change
   useEffect(() => {
     applyFilters(orders);
   }, [searchTerm, statusFilter, dateFilter, sortBy, sortOrder]);
 
-  // Get status count for filter
-  const getStatusCount = (status) => {
-    return orders.filter(o => o.status === status).length;
-  };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale}>
+      {/* WHITE BACKGROUND */}
       <Box sx={{ 
+        width: '100%',
         minHeight: '100vh',
-        bgcolor: premiumColors.noir,
-        p: { xs: 2, lg: 4 }
+        bgcolor: '#ffffff', // PURE WHITE BACKGROUND
+        py: { xs: 2, lg: 5 }
       }}>
-        {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mb: 4
+        {/* CENTERED CONTAINER */}
+        <Box sx={{
+          maxWidth: '1600px',
+          width: '95%',
+          mx: 'auto'
         }}>
-          <Box>
-            <Typography
-              variant="h4"
-              sx={{
-                color: premiumColors.gold,
-                fontFamily: "'Fjalla One', sans-serif",
-                fontWeight: 800,
-                mb: 1
-              }}
-            >
-              Gestion des Commandes
-            </Typography>
-            <Typography
-              sx={{
-                color: premiumColors.goldLight,
-                fontSize: '1rem'
-              }}
-            >
-              {filteredOrders.length} commande{filteredOrders.length > 1 ? 's' : ''} affichée{filteredOrders.length > 1 ? 's' : ''}
-              {filteredOrders.length !== orders.length && ` (sur ${orders.length} total)`}
-            </Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Tooltip title="Exporter CSV">
-              <IconButton
-                onClick={exportToCSV}
-                sx={{
-                  color: premiumColors.gold,
-                  bgcolor: premiumColors.gold + '10',
-                  '&:hover': {
-                    bgcolor: premiumColors.gold + '20',
-                    transform: 'scale(1.1)'
-                  }
-                }}
-              >
-                <Download />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Exporter PDF">
-              <IconButton
-                onClick={exportToPDF}
-                sx={{
-                  color: premiumColors.gold,
-                  bgcolor: premiumColors.gold + '10',
-                  '&:hover': {
-                    bgcolor: premiumColors.gold + '20',
-                    transform: 'scale(1.1)'
-                  }
-                }}
-              >
-                <PictureAsPdf />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Actualiser">
-              <IconButton
-                onClick={handleRefresh}
-                sx={{
-                  color: premiumColors.gold,
-                  bgcolor: premiumColors.gold + '10',
-                  '&:hover': {
-                    bgcolor: premiumColors.gold + '20',
-                    transform: 'rotate(180deg)'
-                  },
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <Refresh />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        {/* Statistics Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Fade in timeout={500}>
-              <Card
-                sx={{
-                  bgcolor: premiumColors.charcoal + '80',
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${premiumColors.gold}20`,
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 20px 40px ${premiumColors.gold}20`,
-                    borderColor: premiumColors.gold + '40'
-                  }
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight,
-                          fontSize: '0.9rem',
-                          mb: 1
-                        }}
-                      >
-                        Total Commandes
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: premiumColors.white,
-                          fontFamily: "'Fjalla One', sans-serif",
-                          fontWeight: 800
-                        }}
-                      >
-                        {stats.total}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight + 'CC',
-                          fontSize: '0.8rem',
-                          mt: 1
-                        }}
-                      >
-                        +{stats.today} aujourd'hui
-                      </Typography>
-                    </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: premiumColors.gold + '20',
-                        color: premiumColors.gold,
-                        width: 56,
-                        height: 56
-                      }}
-                    >
-                      <ShoppingBag />
-                    </Avatar>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Fade in timeout={600}>
-              <Card
-                sx={{
-                  bgcolor: premiumColors.charcoal + '80',
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${premiumColors.gold}20`,
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 20px 40px ${premiumColors.gold}20`,
-                    borderColor: premiumColors.gold + '40'
-                  }
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight,
-                          fontSize: '0.9rem',
-                          mb: 1
-                        }}
-                      >
-                        En attente
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: statusConfig.pending.color,
-                          fontFamily: "'Fjalla One', sans-serif",
-                          fontWeight: 800
-                        }}
-                      >
-                        {stats.pending}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight + 'CC',
-                          fontSize: '0.8rem',
-                          mt: 1
-                        }}
-                      >
-                        {((stats.pending / stats.total) * 100 || 0).toFixed(1)}% du total
-                      </Typography>
-                    </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: statusConfig.pending.bgColor,
-                        color: statusConfig.pending.color,
-                        width: 56,
-                        height: 56
-                      }}
-                    >
-                      <AccessTime />
-                    </Avatar>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Fade in timeout={700}>
-              <Card
-                sx={{
-                  bgcolor: premiumColors.charcoal + '80',
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${premiumColors.gold}20`,
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 20px 40px ${premiumColors.gold}20`,
-                    borderColor: premiumColors.gold + '40'
-                  }
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight,
-                          fontSize: '0.9rem',
-                          mb: 1
-                        }}
-                      >
-                        Livrées
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: statusConfig.delivered.color,
-                          fontFamily: "'Fjalla One', sans-serif",
-                          fontWeight: 800
-                        }}
-                      >
-                        {stats.delivered}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight + 'CC',
-                          fontSize: '0.8rem',
-                          mt: 1
-                        }}
-                      >
-                        {((stats.delivered / stats.total) * 100 || 0).toFixed(1)}% du total
-                      </Typography>
-                    </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: statusConfig.delivered.bgColor,
-                        color: statusConfig.delivered.color,
-                        width: 56,
-                        height: 56
-                      }}
-                    >
-                      <CheckCircle />
-                    </Avatar>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Fade in timeout={800}>
-              <Card
-                sx={{
-                  bgcolor: premiumColors.charcoal + '80',
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${premiumColors.gold}20`,
-                  borderRadius: 3,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: `0 20px 40px ${premiumColors.gold}20`,
-                    borderColor: premiumColors.gold + '40'
-                  }
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight,
-                          fontSize: '0.9rem',
-                          mb: 1
-                        }}
-                      >
-                        Chiffre d'affaires
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: premiumColors.gold,
-                          fontFamily: "'Fjalla One', sans-serif",
-                          fontWeight: 800
-                        }}
-                      >
-                        {stats.revenue.toFixed(2)} DT
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: premiumColors.goldLight + 'CC',
-                          fontSize: '0.8rem',
-                          mt: 1
-                        }}
-                      >
-                        Moyenne: {(stats.revenue / (stats.total - stats.cancelled) || 0).toFixed(2)} DT
-                      </Typography>
-                    </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: premiumColors.gold + '20',
-                        color: premiumColors.gold,
-                        width: 56,
-                        height: 56
-                      }}
-                    >
-                      <AttachMoney />
-                    </Avatar>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-        </Grid>
-
-        {/* Filters */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            mb: 4,
-            bgcolor: premiumColors.charcoal + '80',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${premiumColors.gold}20`,
-            borderRadius: 3
-          }}
-        >
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                placeholder="Rechercher par numéro, nom, email, téléphone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ color: premiumColors.gold }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searchTerm && (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSearchTerm('')}
-                        sx={{ color: premiumColors.goldLight }}
-                      >
-                        <Close />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                  sx: {
-                    color: premiumColors.white,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold + '60'
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold,
-                      boxShadow: `0 0 0 2px ${premiumColors.gold}20`
-                    }
-                  }
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth>
-                <InputLabel 
-                  sx={{ 
-                    color: premiumColors.goldLight,
-                    '&.Mui-focused': { color: premiumColors.gold }
-                  }}
-                >
-                  Statut
-                </InputLabel>
-                <Select
-                  multiple
-                  value={statusFilter}
-                  onChange={handleStatusFilterChange}
-                  input={<OutlinedInput label="Statut" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip
-                          key={value}
-                          label={statusConfig[value]?.label}
-                          size="small"
-                          sx={{
-                            bgcolor: statusConfig[value]?.bgColor,
-                            color: statusConfig[value]?.color,
-                            border: `1px solid ${statusConfig[value]?.color}40`
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                  sx={{
-                    color: premiumColors.white,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold + '60'
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: premiumColors.gold,
-                      boxShadow: `0 0 0 2px ${premiumColors.gold}20`
-                    }
-                  }}
-                >
-                  {Object.keys(statusConfig).map((status) => (
-                    <MenuItem 
-                      key={status} 
-                      value={status}
-                      sx={{
-                        color: premiumColors.white,
-                        '&:hover': {
-                          bgcolor: premiumColors.gold + '20'
-                        }
-                      }}
-                    >
-                      <Checkbox 
-                        checked={statusFilter.indexOf(status) > -1} 
-                        sx={{
-                          color: premiumColors.gold,
-                          '&.Mui-checked': {
-                            color: premiumColors.gold
-                          }
-                        }}
-                      />
-                      <ListItemText 
-                        primary={statusConfig[status].label}
-                        secondary={`${getStatusCount(status)} commandes`}
-                        sx={{
-                          '& .MuiListItemText-primary': {
-                            color: premiumColors.white
-                          },
-                          '& .MuiListItemText-secondary': {
-                            color: premiumColors.goldLight + '80'
-                          }
-                        }}
-                      />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <DatePicker
-                label="Filtrer par date"
-                value={dateFilter}
-                onChange={setDateFilter}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    InputProps: {
-                      sx: {
-                        color: premiumColors.white,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: premiumColors.gold + '60'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: premiumColors.gold
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: premiumColors.gold,
-                          boxShadow: `0 0 0 2px ${premiumColors.gold}20`
-                        }
-                      }
-                    },
-                    InputLabelProps: {
-                      sx: {
-                        color: premiumColors.goldLight,
-                        '&.Mui-focused': { color: premiumColors.gold }
-                      }
-                    }
-                  }
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter([]);
-                  setDateFilter(null);
-                }}
-                startIcon={<FilterList />}
-                sx={{
-                  color: premiumColors.goldLight,
-                  borderColor: premiumColors.gold + '60',
-                  height: 56,
-                  '&:hover': {
-                    borderColor: premiumColors.gold,
-                    bgcolor: premiumColors.gold + '10'
-                  }
-                }}
-              >
-                Réinitialiser
-              </Button>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Sort Bar */}
-        <Box
-          sx={{
-            display: 'flex',
+          {/* Header Section - Adjusted for white background */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
             alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 2,
-            mb: 2,
-            px: 2
-          }}
-        >
-          <Typography sx={{ color: premiumColors.goldLight, fontSize: '0.9rem' }}>
-            Trier par:
-          </Typography>
-          <Button
-            size="small"
-            onClick={() => handleSort('createdAt')}
-            endIcon={sortBy === 'createdAt' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
-            sx={{
-              color: sortBy === 'createdAt' ? premiumColors.gold : premiumColors.goldLight,
-              '&:hover': { color: premiumColors.gold }
-            }}
-          >
-            Date
-          </Button>
-          <Button
-            size="small"
-            onClick={() => handleSort('total')}
-            endIcon={sortBy === 'total' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
-            sx={{
-              color: sortBy === 'total' ? premiumColors.gold : premiumColors.goldLight,
-              '&:hover': { color: premiumColors.gold }
-            }}
-          >
-            Total
-          </Button>
-          <Button
-            size="small"
-            onClick={() => handleSort('status')}
-            endIcon={sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
-            sx={{
-              color: sortBy === 'status' ? premiumColors.gold : premiumColors.goldLight,
-              '&:hover': { color: premiumColors.gold }
-            }}
-          >
-            Statut
-          </Button>
-        </Box>
-
-        {/* Orders List */}
-        {loading ? (
-          <Box sx={{ width: '100%', py: 8 }}>
-            <LinearProgress 
-              sx={{
-                bgcolor: premiumColors.gold + '20',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: premiumColors.gold
-                }
-              }}
-            />
+            mb: 4
+          }}>
+            <Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  color: premiumColors.goldDark,
+                  fontFamily: "'Fjalla One', sans-serif",
+                  fontWeight: 800,
+                  fontSize: { xs: '2rem', lg: '2.5rem' },
+                  letterSpacing: '1px',
+                  mb: 1
+                }}
+              >
+                Gestion des Commandes
+              </Typography>
+              <Typography
+                sx={{
+                  color: '#666666',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                <Store sx={{ fontSize: '1.1rem', color: premiumColors.goldDark }} />
+                {filteredOrders.length} commande{filteredOrders.length > 1 ? 's' : ''} affichée{filteredOrders.length > 1 ? 's' : ''}
+                {filteredOrders.length !== orders.length && ` (sur ${orders.length} total)`}
+              </Typography>
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Tooltip title="Exporter CSV" arrow>
+                <IconButton
+                  onClick={exportToCSV}
+                  sx={{
+                    color: premiumColors.goldDark,
+                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    '&:hover': {
+                      bgcolor: alpha(premiumColors.gold, 0.2)
+                    }
+                  }}
+                >
+                  <Download />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Actualiser" arrow>
+                <IconButton
+                  onClick={handleRefresh}
+                  sx={{
+                    color: premiumColors.goldDark,
+                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    '&:hover': {
+                      bgcolor: alpha(premiumColors.gold, 0.2),
+                      transform: 'rotate(180deg)'
+                    },
+                    transition: 'all 0.4s ease'
+                  }}
+                >
+                  <Refresh />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
-        ) : filteredOrders.length === 0 ? (
+
+          {/* Statistics Cards - BLACK CARDS */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Total Commandes"
+                value={stats.total}
+                subtitle={`+${stats.today} aujourd'hui`}
+                icon={<ShoppingBag />}
+                color={premiumColors.gold}
+                trend={stats.total > 0 ? ((stats.today / stats.total) * 100).toFixed(0) : 0}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="En attente"
+                value={stats.pending}
+                subtitle={`${((stats.pending / stats.total) * 100 || 0).toFixed(1)}% du total`}
+                icon={<AccessTime />}
+                color={premiumColors.pending}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Livrées"
+                value={stats.delivered}
+                subtitle={`${((stats.delivered / stats.total) * 100 || 0).toFixed(1)}% du total`}
+                icon={<CheckCircle />}
+                color={premiumColors.delivered}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Chiffre d'affaires"
+                value={`${stats.revenue.toFixed(2)} DT`}
+                subtitle={`Moyenne: ${(stats.revenue / (stats.total - stats.cancelled) || 0).toFixed(2)} DT`}
+                icon={<AttachMoney />}
+                color={premiumColors.gold}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Filters Section - Light background with black text */}
           <Paper
+            elevation={0}
             sx={{
-              p: 8,
-              textAlign: 'center',
-              bgcolor: premiumColors.charcoal + '80',
-              border: `1px solid ${premiumColors.gold}20`,
+              p: 3,
+              mb: 4,
+              bgcolor: '#f8f8f8',
+              border: '1px solid #e0e0e0',
               borderRadius: 3
             }}
           >
-            <ShoppingBag sx={{ fontSize: 64, color: premiumColors.gold + '80', mb: 2 }} />
-            <Typography
-              variant="h6"
-              sx={{
-                color: premiumColors.goldLight,
-                fontFamily: "'Fjalla One', sans-serif",
-                mb: 1
-              }}
-            >
-              Aucune commande trouvée
-            </Typography>
-            <Typography sx={{ color: premiumColors.goldLight + '80' }}>
-              Essayez de modifier vos filtres ou d'actualiser la page
-            </Typography>
-          </Paper>
-        ) : (
-          <Box>
-            {filteredOrders
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((order) => (
-                <OrderCard
-                  key={order._id}
-                  order={order}
-                  onView={handleViewOrder}
-                  onStatusUpdate={updateOrderStatus}
+            <Grid container spacing={2} alignItems="center">
+              {/* Search */}
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  placeholder="Rechercher par numéro, nom, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: premiumColors.goldDark }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchTerm && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setSearchTerm('')}
+                          sx={{ color: premiumColors.goldDark }}
+                        >
+                          <Close />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      color: '#333333',
+                      bgcolor: '#ffffff',
+                      borderRadius: 2,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#e0e0e0'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: premiumColors.gold
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: premiumColors.gold,
+                        borderWidth: 1.5
+                      }
+                    }
+                  }}
                 />
-              ))}
-            
-            <TablePagination
-              component="div"
-              count={filteredOrders.length}
-              page={page}
-              onPageChange={(e, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
+              </Grid>
+
+              {/* Status Filter */}
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel 
+                    sx={{ 
+                      color: '#666666',
+                      bgcolor: '#ffffff',
+                      px: 1,
+                      '&.Mui-focused': { 
+                        color: premiumColors.goldDark 
+                      }
+                    }}
+                  >
+                    Statut de la commande
+                  </InputLabel>
+                  <Select
+                    multiple
+                    value={statusFilter}
+                    onChange={handleStatusFilterChange}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return (
+                          <Typography sx={{ color: '#666666', fontSize: '0.9rem' }}>
+                            Tous les statuts
+                          </Typography>
+                        );
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip
+                              key={value}
+                              label={statusConfig[value]?.label}
+                              size="small"
+                              sx={{
+                                bgcolor: statusConfig[value]?.bgColor,
+                                color: statusConfig[value]?.color,
+                                fontSize: '0.7rem',
+                                height: 24,
+                                '& .MuiChip-label': { px: 1 }
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      );
+                    }}
+                    sx={{
+                      color: '#333333',
+                      bgcolor: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#e0e0e0'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: premiumColors.gold
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: premiumColors.gold,
+                        borderWidth: 1.5
+                      }
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          bgcolor: premiumColors.surface,
+                          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                          borderRadius: 2,
+                          mt: 1,
+                          maxHeight: 400,
+                          boxShadow: premiumColors.shadowLg
+                        }
+                      }
+                    }}
+                  >
+                    {Object.keys(statusConfig).map((status) => (
+                      <MenuItem 
+                        key={status} 
+                        value={status}
+                        sx={{
+                          color: premiumColors.white,
+                          '&:hover': {
+                            bgcolor: statusConfig[status]?.bgColor
+                          },
+                          '&.Mui-selected': {
+                            bgcolor: alpha(statusConfig[status]?.color, 0.2),
+                            '&:hover': {
+                              bgcolor: alpha(statusConfig[status]?.color, 0.3)
+                            }
+                          }
+                        }}
+                      >
+                        <Checkbox 
+                          checked={statusFilter.indexOf(status) > -1} 
+                          size="small"
+                          sx={{
+                            color: statusConfig[status]?.color,
+                            '&.Mui-checked': {
+                              color: statusConfig[status]?.color
+                            }
+                          }}
+                        />
+                        <ListItemText 
+                          primary={statusConfig[status].label}
+                          secondary={`${getStatusCount(status)} commande${getStatusCount(status) > 1 ? 's' : ''}`}
+                          sx={{
+                            '& .MuiListItemText-primary': {
+                              color: premiumColors.white,
+                              fontSize: '0.9rem',
+                              fontWeight: statusFilter.includes(status) ? 700 : 400
+                            },
+                            '& .MuiListItemText-secondary': {
+                              color: premiumColors.textMuted,
+                              fontSize: '0.75rem'
+                            }
+                          }}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Date Filter */}
+              <Grid item xs={12} md={3}>
+                <DatePicker
+                  label="Filtrer par date"
+                  value={dateFilter}
+                  onChange={setDateFilter}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: 'small',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          color: '#333333',
+                          bgcolor: '#ffffff',
+                          borderRadius: 2,
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#e0e0e0'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: premiumColors.gold
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: premiumColors.gold,
+                            borderWidth: 1.5
+                          }
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#666666',
+                          '&.Mui-focused': {
+                            color: premiumColors.goldDark
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Grid>
+
+              {/* Reset Button */}
+              <Grid item xs={12} md={2}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter([]);
+                    setDateFilter(null);
+                  }}
+                  startIcon={<FilterList />}
+                  sx={{
+                    color: premiumColors.goldDark,
+                    borderColor: premiumColors.gold,
+                    borderWidth: 1.5,
+                    bgcolor: '#ffffff',
+                    py: 1,
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    '&:hover': {
+                      borderColor: premiumColors.goldDark,
+                      bgcolor: alpha(premiumColors.gold, 0.05)
+                    }
+                  }}
+                >
+                  Réinitialiser
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Sort Bar - Adjusted for white background */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 2,
+              mb: 2,
+              px: 1
+            }}
+          >
+            <Typography sx={{ color: '#666666', fontSize: '0.85rem' }}>
+              Trier par:
+            </Typography>
+            <Button
+              size="small"
+              onClick={() => handleSort('createdAt')}
+              endIcon={sortBy === 'createdAt' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
               sx={{
-                color: premiumColors.white,
-                '& .MuiTablePagination-select': {
-                  color: premiumColors.white
-                },
-                '& .MuiTablePagination-selectIcon': {
-                  color: premiumColors.gold
-                },
-                '& .MuiTablePagination-actions button': {
-                  color: premiumColors.gold,
-                  '&:disabled': {
-                    color: premiumColors.gold + '40'
-                  }
+                color: sortBy === 'createdAt' ? premiumColors.goldDark : '#666666',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': { 
+                  color: premiumColors.goldDark,
+                  bgcolor: 'transparent'
                 }
               }}
-            />
+            >
+              Date
+            </Button>
+            <Button
+              size="small"
+              onClick={() => handleSort('total')}
+              endIcon={sortBy === 'total' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
+              sx={{
+                color: sortBy === 'total' ? premiumColors.goldDark : '#666666',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': { 
+                  color: premiumColors.goldDark,
+                  bgcolor: 'transparent'
+                }
+              }}
+            >
+              Total
+            </Button>
+            <Button
+              size="small"
+              onClick={() => handleSort('status')}
+              endIcon={sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
+              sx={{
+                color: sortBy === 'status' ? premiumColors.goldDark : '#666666',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': { 
+                  color: premiumColors.goldDark,
+                  bgcolor: 'transparent'
+                }
+              }}
+            >
+              Statut
+            </Button>
           </Box>
-        )}
 
-        {/* Order Details Modal */}
+          {/* Orders List - BLACK CARDS */}
+          {loading ? (
+            <Box sx={{ width: '100%', py: 8 }}>
+              <LinearProgress 
+                sx={{
+                  bgcolor: alpha(premiumColors.gold, 0.1),
+                  height: 6,
+                  borderRadius: 3,
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: premiumColors.gold,
+                    borderRadius: 3
+                  }
+                }}
+              />
+            </Box>
+          ) : filteredOrders.length === 0 ? (
+            <Paper
+              sx={{
+                p: 8,
+                textAlign: 'center',
+                bgcolor: premiumColors.surface,
+                border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
+                borderRadius: 3
+              }}
+            >
+              <ShoppingBag sx={{ fontSize: 80, color: alpha(premiumColors.gold, 0.3), mb: 2 }} />
+              <Typography
+                variant="h5"
+                sx={{
+                  color: premiumColors.white,
+                  fontFamily: "'Fjalla One', sans-serif",
+                  fontWeight: 700,
+                  mb: 1
+                }}
+              >
+                Aucune commande trouvée
+              </Typography>
+              <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.95rem' }}>
+                Essayez de modifier vos filtres
+              </Typography>
+            </Paper>
+          ) : (
+            <Box>
+              {filteredOrders
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onView={handleViewOrder}
+                    onStatusUpdate={updateOrderStatus}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              
+              <TablePagination
+                component="div"
+                count={filteredOrders.length}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                labelRowsPerPage="Lignes par page"
+                sx={{
+                  mt: 2,
+                  color: '#666666',
+                  '& .MuiTablePagination-select': {
+                    color: '#333333'
+                  },
+                  '& .MuiTablePagination-selectIcon': {
+                    color: premiumColors.goldDark
+                  },
+                  '& .MuiTablePagination-actions button': {
+                    color: premiumColors.goldDark,
+                    '&:disabled': {
+                      color: alpha(premiumColors.gold, 0.3)
+                    }
+                  }
+                }}
+              />
+            </Box>
+          )}
+        </Box>
+
+        {/* Order Details Modal - REDESIGNED CLEAN VERSION */}
         <OrderDetailsModal
           open={detailsOpen}
           onClose={() => setDetailsOpen(false)}
           order={selectedOrder}
           onStatusUpdate={updateOrderStatus}
+          onDelete={handleDeleteClick}
         />
 
-        {/* Snackbar */}
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setOrderToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          order={orderToDelete}
+        />
+
+        {/* Snackbar - Adjusted for white background */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
@@ -1958,13 +2575,15 @@ const Order = () => {
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
             sx={{
-              bgcolor: premiumColors.charcoal,
+              bgcolor: premiumColors.surface,
               color: premiumColors.white,
               border: `1px solid ${
-                snackbar.severity === 'success' ? premiumColors.success : 
-                snackbar.severity === 'error' ? premiumColors.error : 
-                premiumColors.gold
-              }40`,
+                snackbar.severity === 'success' ? alpha(premiumColors.success, 0.5) : 
+                snackbar.severity === 'error' ? alpha(premiumColors.error, 0.5) : 
+                alpha(premiumColors.gold, 0.5)
+              }`,
+              borderRadius: 2,
+              boxShadow: premiumColors.shadowLg,
               '& .MuiAlert-icon': {
                 color: snackbar.severity === 'success' ? premiumColors.success : 
                        snackbar.severity === 'error' ? premiumColors.error : 
@@ -1978,23 +2597,36 @@ const Order = () => {
 
         <style jsx global>{`
           @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            background-color: #ffffff;
+            font-family: 'Inter', sans-serif;
+          }
           
           ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
           }
           
           ::-webkit-scrollbar-track {
-            background: ${premiumColors.charcoal};
+            background: #f0f0f0;
           }
           
           ::-webkit-scrollbar-thumb {
-            background: ${premiumColors.gold}40;
-            border-radius: 4px;
+            background: ${alpha(premiumColors.gold, 0.3)};
+            border-radius: 5px;
+            border: 2px solid #f0f0f0;
           }
           
           ::-webkit-scrollbar-thumb:hover {
-            background: ${premiumColors.gold}60;
+            background: ${alpha(premiumColors.gold, 0.5)};
           }
         `}</style>
       </Box>
