@@ -18,7 +18,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip
+  Chip,
+  Snackbar
 } from '@mui/material';
 import {
   Close,
@@ -36,7 +37,8 @@ import {
   Whatshot,
   Warning
 } from '@mui/icons-material';
-import { toast, Toaster } from 'sonner';
+import API_BASE from '../../Config/api';
+import tawakkol from '../../assets/tawakkol.png';
 
 // === PREMIUM COLORS & GLASS STYLE (Enhanced) ===
 const premiumColors = {
@@ -106,9 +108,10 @@ const importanceLevels = [
   }
 ];
 
-// === ENHANCED CUSTOM TOAST COMPONENT ===
-const CustomToast = ({ type, fullName, message, importance, onDismiss, progress }) => {
+// === CUSTOM TOAST COMPONENT ===
+const CustomToast = ({ type, fullName, message, importance, onDismiss }) => {
   const isSuccess = type === 'success';
+  const isError = type === 'error';
   const importanceConfig = importanceLevels.find(level => level.value === importance) || importanceLevels[1];
 
   return (
@@ -120,57 +123,49 @@ const CustomToast = ({ type, fullName, message, importance, onDismiss, progress 
         p: 2,
         borderRadius: 3,
         background: `linear-gradient(135deg, ${premiumColors.noir}EE 0%, ${premiumColors.charcoal}EE 100%)`,
-        border: `1px solid ${isSuccess ? premiumColors.success + '40' : premiumColors.error + '40'}`,
+        border: `1px solid ${
+          isSuccess ? premiumColors.success + '40' : 
+          isError ? premiumColors.error + '40' : 
+          premiumColors.gold + '40'
+        }`,
         backdropFilter: 'blur(25px)',
-        boxShadow: `0 12px 40px ${isSuccess ? premiumColors.success + '25' : premiumColors.error + '25'}`,
+        boxShadow: `0 12px 40px ${
+          isSuccess ? premiumColors.success + '25' : 
+          isError ? premiumColors.error + '25' : 
+          premiumColors.gold + '25'
+        }`,
         maxWidth: 450,
         fontFamily: "'Fjalla One', sans-serif",
         position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: isSuccess ? premiumColors.success : premiumColors.error,
-          animation: progress ? `shrinkWidth ${progress.duration}ms linear` : 'none'
-        }
+        overflow: 'hidden'
       }}
     >
-      {/* Animated Logo */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        width: 78, 
+        height: 78,
+        minWidth: 78,
+        bgcolor: premiumColors.gold + '15',
+        borderRadius: 2,
+        overflow: 'hidden'
+      }}>
         <Box
           component="img"
-          src="/tawakkol-logo.svg"
+          src={tawakkol}
           alt="Tawakkol"
           sx={{ 
-            width: 40, 
-            height: 40, 
-            mb: 0.5,
-            filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))',
-            animation: 'pulse 2s ease-in-out infinite'
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.4))'
           }}
         />
-        <Typography
-          sx={{
-            background: premiumColors.premiumGradient,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            fontFamily: "'Fjalla One', sans-serif",
-          }}
-        >
-          Tawakkol
-        </Typography>
+      </Box>
       </Box>
 
-      {/* Content */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <Typography
@@ -186,22 +181,24 @@ const CustomToast = ({ type, fullName, message, importance, onDismiss, progress 
           >
             {fullName}
           </Typography>
-          <Chip
-            icon={importanceConfig.icon}
-            label={importanceConfig.label}
-            size="small"
-            color={importanceConfig.chipColor}
-            sx={{ 
-              height: 20,
-              fontSize: '0.7rem',
-              fontFamily: "'Fjalla One', sans-serif",
-              '& .MuiChip-icon': { fontSize: '0.9rem' }
-            }}
-          />
+          {importance && (
+            <Chip
+              icon={importanceConfig.icon}
+              label={importanceConfig.label}
+              size="small"
+              color={importanceConfig.chipColor}
+              sx={{ 
+                height: 20,
+                fontSize: '0.7rem',
+                fontFamily: "'Fjalla One', sans-serif",
+                '& .MuiChip-icon': { fontSize: '0.9rem' }
+              }}
+            />
+          )}
         </Box>
         <Typography
           sx={{
-            color: premiumColors.goldLight,
+            color: isSuccess ? premiumColors.success : premiumColors.goldLight,
             fontSize: '0.85rem',
             lineHeight: 1.4,
             overflow: 'hidden',
@@ -215,9 +212,8 @@ const CustomToast = ({ type, fullName, message, importance, onDismiss, progress 
         </Typography>
       </Box>
 
-      {/* Action Buttons */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        <Tooltip title={isSuccess ? "Message Sent" : "Sending Failed"}>
+        <Tooltip title={isSuccess ? "Message envoyé" : "Échec de l'envoi"}>
           <IconButton
             size="small"
             sx={{ 
@@ -233,7 +229,7 @@ const CustomToast = ({ type, fullName, message, importance, onDismiss, progress 
             {isSuccess ? <Check fontSize="small" /> : <ErrorIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
-        <Tooltip title="Dismiss">
+        <Tooltip title="Fermer">
           <IconButton
             size="small"
             onClick={onDismiss}
@@ -255,7 +251,6 @@ const CustomToast = ({ type, fullName, message, importance, onDismiss, progress 
   );
 };
 
-// === ENHANCED CONTACT COMPONENT ===
 const Contact = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -269,12 +264,21 @@ const Contact = ({ onClose }) => {
   const [errors, setErrors] = useState({});
   const [fileName, setFileName] = useState('');
   const [typingEffect, setTypingEffect] = useState('');
+  
+  // Toast state
+  const [toastState, setToastState] = useState({
+    open: false,
+    type: '',
+    fullName: '',
+    importance: '',
+    message: ''
+  });
 
   const theme = useTheme();
   const isLarge = useMediaQuery(theme.breakpoints.up('lg'));
   const fileInputRef = useRef(null);
 
-  // Typing effect for header
+  // Typing effect
   useEffect(() => {
     const text = "Contactez Tawakkol";
     let i = 0;
@@ -289,6 +293,20 @@ const Contact = ({ onClose }) => {
     return () => clearInterval(typing);
   }, []);
 
+  const handleToastClose = () => {
+    setToastState(prev => ({ ...prev, open: false }));
+  };
+
+  const showToast = (type, fullName, message, importance = null) => {
+    setToastState({
+      open: true,
+      type,
+      fullName,
+      importance,
+      message
+    });
+  };
+
   const handleChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
@@ -297,15 +315,12 @@ const Contact = ({ onClose }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast.error("File size must be less than 10MB");
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('error', 'Erreur', 'Le fichier doit être inférieur à 10MB');
         return;
       }
       setFormData(prev => ({ ...prev, file }));
       setFileName(file.name);
-      
-      // Show success message
-      toast.success(`File "${file.name}" uploaded successfully`);
     }
   };
 
@@ -313,6 +328,10 @@ const Contact = ({ onClose }) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('error', 'Erreur', 'Le fichier doit être inférieur à 10MB');
+        return;
+      }
       setFormData(prev => ({ ...prev, file }));
       setFileName(file.name);
     }
@@ -333,60 +352,73 @@ const Contact = ({ onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) {
+    showToast('error', 'Erreur', 'Veuillez corriger les erreurs dans le formulaire');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append('fullName', formData.fullName);
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('phone', formData.phone);
+    formDataToSend.append('importance', formData.importance);
+    formDataToSend.append('issue', formData.issue);
     
-    if (!validateForm()) {
-      toast.error("Veuillez corriger les erreurs dans le formulaire");
-      return;
+    if (formData.file) {
+      formDataToSend.append('file', formData.file);
     }
 
-    setIsLoading(true);
+    const response = await fetch(`${API_BASE}api/contact`, {
+      method: 'POST',
+      body: formDataToSend
+    });
 
-    try {
-      // Simulate API call with progress
-      await new Promise((resolve, reject) => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          if (progress >= 100) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 200);
-      });
+    const data = await response.json();
 
-      console.log('Contact Form Submitted:', formData);
-
-      // SUCCESS TOAST with progress bar
-      toast.custom(
-        (t) => (
-          <CustomToast
-            type="success"
-            fullName={formData.fullName}
-            importance={formData.importance}
-            message="Votre message a été envoyé avec succès! Nous vous répondrons dans les plus brefs délais."
-            onDismiss={() => toast.dismiss(t)}
-            progress={{ duration: 5000 }}
-          />
-        ),
-        { 
-          duration: 5000, 
-          id: 'contact-success',
-          position: 'top-center'
-        }
+    if (response.ok && data.success) {
+      showToast(
+        'success', 
+        formData.fullName,
+        'Votre message a été envoyé avec succès! Nous vous répondrons dans les plus brefs délais.',
+        formData.importance
       );
 
       // Reset form
-      setFormData({ fullName: '', email: '', phone: '', importance: 'medium', issue: '', file: null });
+      setFormData({ 
+        fullName: '', 
+        email: '', 
+        phone: '', 
+        importance: 'medium', 
+        issue: '', 
+        file: null 
+      });
       setFileName('');
       
-    } catch (err) {
-      toast.error("Échec de l'envoi. Veuillez réessayer.");
-    } finally {
-      setIsLoading(false);
+      // Auto close after 3 seconds
+      setTimeout(() => {
+        if (onClose) onClose();
+      }, 3000);
+    } else {
+      throw new Error(data.message || 'Erreur lors de l\'envoi');
     }
-  };
+    
+  } catch (err) {
+    console.error('Contact error:', err);
+    showToast(
+      'error',
+      'Erreur',
+      err.message || "Échec de l'envoi. Veuillez réessayer."
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -399,24 +431,8 @@ const Contact = ({ onClose }) => {
 
   return (
     <>
-      {/* ENHANCED SONNER TOASTER */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: 'transparent',
-            border: 'none',
-            boxShadow: 'none',
-            padding: 0,
-          },
-        }}
-        richColors
-        closeButton
-        theme="dark"
-      />
-
       <Box sx={{
-        width: '99vw',
+        width: '100vw',
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${premiumColors.charcoal} 0%, ${premiumColors.noir} 50%, ${premiumColors.charcoal} 100%)`,
         position: 'relative',
@@ -440,7 +456,7 @@ const Contact = ({ onClose }) => {
         }
       }}>
         
-        {/* Enhanced Animated Ornaments */}
+        {/* Animated Ornaments */}
         {[...Array(6)].map((_, i) => (
           <Box key={i} sx={{
             position: 'absolute',
@@ -479,7 +495,7 @@ const Contact = ({ onClose }) => {
               }
             }}>
               
-              {/* Enhanced Premium Header */}
+              {/* Premium Header */}
               <Box sx={{
                 background: `linear-gradient(135deg, ${premiumColors.gold} 0%, ${premiumColors.goldDark} 100%)`,
                 py: { xs: 4, lg: 3 },
@@ -497,7 +513,7 @@ const Contact = ({ onClose }) => {
                 }
               }}>
                 {onClose && (
-                  <Tooltip title="Close">
+                  <Tooltip title="Fermer">
                     <IconButton
                       onClick={onClose}
                       sx={{
@@ -563,7 +579,7 @@ const Contact = ({ onClose }) => {
               {/* Form Body */}
               <Box sx={{ p: { xs: 3, md: 4, lg: 6 } }}>
                 <Fade in timeout={1000}>
-                  <Box component="form" onSubmit={handleSubmit}>
+                  <Box component="form" onSubmit={handleSubmit} encType="multipart/form-data">
                     
                     <Box sx={{
                       display: 'grid',
@@ -579,14 +595,7 @@ const Contact = ({ onClose }) => {
                         error={!!errors.fullName}
                         helperText={errors.fullName}
                         sx={inputStyle}
-                        InputProps={{
-                          ...inputProps,
-                          endAdornment: formData.fullName && (
-                            <InputAdornment position="end">
-                              <Check sx={{ color: premiumColors.success }} />
-                            </InputAdornment>
-                          )
-                        }}
+                        InputProps={inputProps}
                       />
 
                       <TextField
@@ -728,7 +737,7 @@ const Contact = ({ onClose }) => {
                     </Box>
 
                     {/* Enhanced File Upload */}
-                    <Tooltip title="Click or drag & drop to upload files">
+                    <Tooltip title="Cliquez ou glissez-déposez pour uploader un fichier">
                       <Box
                         sx={{
                           mb: { xs: 3, lg: 4 },
@@ -783,20 +792,19 @@ const Contact = ({ onClose }) => {
                           fontSize: '0.9rem',
                           fontFamily: "'Fjalla One', sans-serif",
                         }}>
-                          Supports: PDF, JPG, PNG • Max: 10MB
+                          Supports: PDF, JPG, PNG, DOC • Max: 10MB
                         </Typography>
                         <input
                           ref={fileInputRef}
-                          id="file-input"
                           type="file"
                           hidden
                           onChange={handleFileChange}
-                          accept=".pdf,.jpg,.jpeg,.png"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                         />
                       </Box>
                     </Tooltip>
 
-                    {/* Enhanced Submit Button */}
+                    {/* Submit Button */}
                     <Button
                       type="submit"
                       fullWidth
@@ -860,7 +868,7 @@ const Contact = ({ onClose }) => {
                       )}
                     </Button>
 
-                    {/* Enhanced Contact Options */}
+                    {/* Contact Options */}
                     <Box sx={{ 
                       display: 'grid', 
                       gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, 
@@ -939,7 +947,7 @@ const Contact = ({ onClose }) => {
           </Zoom>
         </Box>
 
-        {/* Enhanced Loading Backdrop */}
+        {/* Loading Backdrop */}
         <Backdrop
           open={isLoading}
           sx={{
@@ -985,6 +993,29 @@ const Contact = ({ onClose }) => {
         </Backdrop>
       </Box>
 
+      {/* Custom Toast */}
+      <Snackbar
+        open={toastState.open}
+        autoHideDuration={toastState.type === 'success' ? 5000 : 6000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{
+          '& .MuiSnackbar-root': {
+            maxWidth: '100%'
+          }
+        }}
+      >
+        <Box>
+          <CustomToast
+            type={toastState.type}
+            fullName={toastState.fullName}
+            importance={toastState.importance}
+            message={toastState.message}
+            onDismiss={handleToastClose}
+          />
+        </Box>
+      </Snackbar>
+
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap');
         
@@ -997,7 +1028,7 @@ const Contact = ({ onClose }) => {
   );
 };
 
-// === ENHANCED INPUT STYLES ===
+// Input Styles
 const inputStyle = {
   '& .MuiOutlinedInput-root': {
     color: premiumColors.white,
