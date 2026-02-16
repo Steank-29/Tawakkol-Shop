@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// Facture.jsx
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -14,495 +15,193 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TablePagination,
   Card,
   CardContent,
   Grid,
   Avatar,
-  Divider,
   Tooltip,
   LinearProgress,
   Alert,
   Snackbar,
   FormControl,
-  InputLabel,
   Select,
   ListItemText,
   Checkbox,
   Zoom,
   Badge,
   alpha,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Stepper,
   Step,
   StepLabel,
-  StepContent,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormLabel,
-  TextareaAutosize
+  StepConnector,
+  Divider
 } from '@mui/material';
 import {
   Search,
   Refresh,
-  FilterList,
   Visibility,
   Close,
-  CheckCircle,
-  Cancel,
-  LocalShipping,
-  Inventory,
-  Payment,
-  Receipt,
-  Download,
   Email,
   Phone,
-  LocationOn,
   Person,
-  ShoppingBag,
   AttachMoney,
   CalendarToday,
   AccessTime,
   ArrowUpward,
   ArrowDownward,
-  MoreVert,
   Delete,
-  Store,
-  TrendingUp,
-  TrendingDown,
   Warning,
   Info,
-  PictureAsPdf,
-  Print,
-  Share,
-  Edit,
-  Save,
-  Add,
-  Remove,
-  Calculate,
-  Business,
-  Verified,
-  FileCopy,
-  Send,
-  Schedule
+  LocalShipping,
+  Payment,
+  LocationOn,
+  ShoppingBag,
+  Receipt,
+  CheckCircle,
+  Cancel,
+  Schedule,
+  FileDownload,
+  Inventory
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import frLocale from 'date-fns/locale/fr';
-import { format, formatDistance } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import API_BASE from '../Config/api';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+import API_BASE from '../Config/api';
 
-// ============ PREMIUM COLOR PALETTE - WHITE BACKGROUND + BLACK CARDS ============
+// ============ PREMIUM COLOR PALETTE ============
 const premiumColors = {
   gold: '#d4af37',
-  goldLight: '#f4e4a6',
   goldDark: '#b8941f',
-  goldGradient: 'linear-gradient(135deg, #d4af37 0%, #f9d423 50%, #d4af37 100%)',
-  
   noir: '#000000',
   charcoal: '#0a0a0a',
   surface: '#121212',
   surfaceLight: '#1e1e1e',
-  
   white: '#ffffff',
   textPrimary: '#ffffff',
   textSecondary: '#e0e0e0',
   textMuted: '#9e9e9e',
   
-  // Status Colors
-  paid: '#10b981',
   pending: '#f59e0b',
+  confirmed: '#3b82f6',
+  processing: '#8b5cf6',
+  shipped: '#06b6d4',
+  delivered: '#10b981',
   cancelled: '#ef4444',
-  draft: '#6b7280',
   
-  paidBg: 'rgba(16, 185, 129, 0.15)',
   pendingBg: 'rgba(245, 158, 11, 0.15)',
+  confirmedBg: 'rgba(59, 130, 246, 0.15)',
+  processingBg: 'rgba(139, 92, 246, 0.15)',
+  shippedBg: 'rgba(6, 182, 212, 0.15)',
+  deliveredBg: 'rgba(16, 185, 129, 0.15)',
   cancelledBg: 'rgba(239, 68, 68, 0.15)',
-  draftBg: 'rgba(107, 114, 128, 0.15)',
   
-  success: '#10b981',
-  error: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6',
+  cash: '#10b981',
+  card: '#3b82f6',
+  bank_transfer: '#8b5cf6',
   
-  shadowSm: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  shadowMd: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-  shadowLg: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-  shadowXl: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  cashBg: 'rgba(16, 185, 129, 0.15)',
+  cardBg: 'rgba(59, 130, 246, 0.15)',
+  bankTransferBg: 'rgba(139, 92, 246, 0.15)',
+  
   shadowGold: '0 10px 30px -5px rgba(212, 175, 55, 0.2)'
 };
 
-// ============ INVOICE STATUS CONFIGURATION ============
-const invoiceStatusConfig = {
-  paid: {
-    label: 'Payée',
-    color: premiumColors.paid,
-    bgColor: premiumColors.paidBg,
-    icon: <CheckCircle />,
-    iconColor: premiumColors.paid
-  },
-  pending: {
-    label: 'En attente',
-    color: premiumColors.pending,
-    bgColor: premiumColors.pendingBg,
-    icon: <Schedule />,
-    iconColor: premiumColors.pending
-  },
-  cancelled: {
-    label: 'Annulée',
-    color: premiumColors.cancelled,
-    bgColor: premiumColors.cancelledBg,
-    icon: <Cancel />,
-    iconColor: premiumColors.cancelled
-  },
-  draft: {
-    label: 'Brouillon',
-    color: premiumColors.draft,
-    bgColor: premiumColors.draftBg,
-    icon: <Edit />,
-    iconColor: premiumColors.draft
-  }
+// ============ STATUS CONFIGURATION ============
+const statusConfig = {
+  pending: { label: 'En attente', color: premiumColors.pending, bgColor: premiumColors.pendingBg, icon: <Schedule />, step: 0 },
+  confirmed: { label: 'Confirmée', color: premiumColors.confirmed, bgColor: premiumColors.confirmedBg, icon: <CheckCircle />, step: 1 },
+  processing: { label: 'En préparation', color: premiumColors.processing, bgColor: premiumColors.processingBg, icon: <Inventory />, step: 2 },
+  shipped: { label: 'Expédiée', color: premiumColors.shipped, bgColor: premiumColors.shippedBg, icon: <LocalShipping />, step: 3 },
+  delivered: { label: 'Livrée', color: premiumColors.delivered, bgColor: premiumColors.deliveredBg, icon: <CheckCircle />, step: 4 },
+  cancelled: { label: 'Annulée', color: premiumColors.cancelled, bgColor: premiumColors.cancelledBg, icon: <Cancel />, step: -1 }
 };
 
-// ============ COMPANY INFO ============
-const companyInfo = {
-  name: 'TAWAKKOL STORE',
-  address: '123 Rue de la Liberté, 1000 Tunis',
-  phone: '+216 71 123 456',
-  email: 'contact@tawakkol-store.tn',
-  website: 'www.tawakkol-store.tn',
-  taxId: 'MT1234567',
-  regNumber: 'B12345678',
-  logo: '/logo.png',
-  bankName: 'Banque de Tunisie',
-  bankAccount: 'TN59 1234 5678 9012 3456 7890',
-  iban: 'TN59 1234 5678 9012 3456 7890',
-  swift: 'BTBKTTTN'
+// ============ PAYMENT METHOD CONFIG ============
+const paymentConfig = {
+  cash: { label: 'Espèces', color: premiumColors.cash, bgColor: premiumColors.cashBg, icon: <AttachMoney /> },
+  card: { label: 'Carte', color: premiumColors.card, bgColor: premiumColors.cardBg, icon: <Payment /> },
+  bank_transfer: { label: 'Virement', color: premiumColors.bank_transfer, bgColor: premiumColors.bankTransferBg, icon: <Payment /> }
+};
+
+// Helper function for safe alpha
+const safeAlpha = (color, value) => {
+  if (!color) return 'rgba(0,0,0,0.1)';
+  try {
+    return alpha(color, value);
+  } catch (error) {
+    console.warn('Error applying alpha to color:', color);
+    return 'rgba(0,0,0,0.1)';
+  }
 };
 
 // ============ STATISTICS CARD COMPONENT ============
-const StatCard = ({ title, value, subtitle, icon, color, trend }) => {
-  return (
-    <Zoom in timeout={400}>
-      <Card
-        elevation={0}
-        sx={{
-          bgcolor: premiumColors.surface,
-          border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
-          borderRadius: 3,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '4px',
-            background: `linear-gradient(90deg, ${color}, ${premiumColors.gold})`,
-            opacity: 0.8
-          },
-          '&:hover': {
-            transform: 'translateY(-8px)',
-            boxShadow: premiumColors.shadowGold,
-            borderColor: alpha(premiumColors.gold, 0.3),
-            bgcolor: premiumColors.charcoal
-          }
-        }}
-      >
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography
-                sx={{
-                  color: premiumColors.textMuted,
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  mb: 1
-                }}
-              >
-                {title}
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  color: premiumColors.white,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '2rem',
-                  lineHeight: 1.2,
-                  mb: 0.5
-                }}
-              >
-                {value}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography
-                  sx={{
-                    color: premiumColors.textMuted,
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  {subtitle}
-                </Typography>
-              </Box>
-            </Box>
-            <Avatar
-              sx={{
-                bgcolor: alpha(color, 0.15),
-                color: color,
-                width: 56,
-                height: 56,
-                borderRadius: 2,
-                '& svg': {
-                  fontSize: '2rem'
-                }
-              }}
-            >
-              {icon}
-            </Avatar>
-          </Box>
-        </CardContent>
-      </Card>
-    </Zoom>
-  );
-};
-
-// ============ PDF GENERATION SERVICE ============
-class InvoicePDFService {
-  static generateInvoice(invoiceData) {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    // Set fonts
-    doc.setFont('helvetica', 'normal');
-    
-    // Colors
-    const goldColor = [212, 175, 55];
-    const darkColor = [18, 18, 18];
-    const lightGray = [245, 245, 245];
-    const textGray = [100, 100, 100];
-
-    // === HEADER SECTION ===
-    
-    // Background decoration
-    doc.setFillColor(...darkColor);
-    doc.rect(0, 0, 210, 40, 'F');
-    
-    doc.setFillColor(...goldColor);
-    doc.rect(0, 38, 210, 2, 'F');
-    
-    // Company Name
-    doc.setTextColor(...goldColor);
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TAWAKKOL STORE', 15, 25);
-    
-    // Invoice Title
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('FACTURE', 180, 25, { align: 'right' });
-    
-    // Invoice Number
-    doc.setFontSize(10);
-    doc.text(`N°: ${invoiceData.invoiceNumber}`, 180, 35, { align: 'right' });
-    
-    // === COMPANY INFO ===
-    doc.setTextColor(...textGray);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(companyInfo.address, 15, 55);
-    doc.text(`Tél: ${companyInfo.phone}`, 15, 62);
-    doc.text(`Email: ${companyInfo.email}`, 15, 69);
-    doc.text(`Matricule: ${companyInfo.regNumber}`, 15, 76);
-    doc.text(`N° TVA: ${companyInfo.taxId}`, 15, 83);
-    
-    // === INVOICE DETAILS ===
-    doc.setDrawColor(...goldColor);
-    doc.setLineWidth(0.5);
-    doc.line(120, 55, 195, 55);
-    
-    doc.setTextColor(...darkColor);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date d\'émission:', 120, 65);
-    doc.text('Date d\'échéance:', 120, 75);
-    doc.text('Statut:', 120, 85);
-    
-    doc.setTextColor(...textGray);
-    doc.setFont('helvetica', 'normal');
-    doc.text(format(new Date(invoiceData.createdAt), 'dd/MM/yyyy'), 170, 65);
-    doc.text(format(new Date(invoiceData.dueDate || invoiceData.createdAt), 'dd/MM/yyyy'), 170, 75);
-    
-    // Status Badge
-    const status = invoiceStatusConfig[invoiceData.status] || invoiceStatusConfig.pending;
-    doc.setFillColor(...status.color === premiumColors.paid ? [16, 185, 129] : 
-                     status.color === premiumColors.pending ? [245, 158, 11] : 
-                     status.color === premiumColors.cancelled ? [239, 68, 68] : [107, 114, 128]);
-    doc.roundedRect(165, 80, 30, 8, 2, 2, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text(status.label, 180, 86, { align: 'center' });
-    
-    // === CLIENT INFO ===
-    doc.setFillColor(...lightGray);
-    doc.rect(15, 100, 180, 35, 'F');
-    
-    doc.setTextColor(...goldColor);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FACTURER À', 20, 115);
-    
-    doc.setTextColor(...darkColor);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text(invoiceData.customer?.fullName || 'Client', 20, 125);
-    
-    doc.setTextColor(...textGray);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(invoiceData.customer?.email || '', 20, 135);
-    doc.text(invoiceData.customer?.phone || '', 20, 145);
-    doc.text(invoiceData.customer?.address || '', 20, 155);
-    
-    // === ITEMS TABLE ===
-    const tableColumn = [
-      { header: 'Description', dataKey: 'description' },
-      { header: 'Qté', dataKey: 'quantity' },
-      { header: 'Prix unit.', dataKey: 'price' },
-      { header: 'Total', dataKey: 'total' }
-    ];
-    
-    const tableRows = invoiceData.items.map(item => ({
-      description: item.name,
-      quantity: item.quantity.toString(),
-      price: `${item.price.toFixed(2)} DT`,
-      total: `${(item.price * item.quantity).toFixed(2)} DT`
-    }));
-    
-    doc.autoTable({
-      columns: tableColumn,
-      body: tableRows,
-      startY: 170,
-      theme: 'grid',
-      styles: {
-        fontSize: 9,
-        cellPadding: 5,
-        lineColor: [212, 175, 55, 30],
-        lineWidth: 0.1,
-        textColor: [50, 50, 50]
+const StatCard = React.memo(({ title, value, subtitle, icon, color }) => (
+  <Zoom in timeout={400}>
+    <Card elevation={0} sx={{
+      bgcolor: premiumColors.surface,
+      border: `1px solid ${safeAlpha(premiumColors.gold, 0.15)}`,
+      borderRadius: 3,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      position: 'relative',
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '4px',
+        background: `linear-gradient(90deg, ${color || premiumColors.gold}, ${premiumColors.gold})`,
+        opacity: 0.8
       },
-      headStyles: {
-        fillColor: [212, 175, 55],
-        textColor: [0, 0, 0],
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      columnStyles: {
-        description: { cellWidth: 80 },
-        quantity: { cellWidth: 25, halign: 'center' },
-        price: { cellWidth: 35, halign: 'right' },
-        total: { cellWidth: 35, halign: 'right' }
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
+      '&:hover': {
+        transform: 'translateY(-8px)',
+        boxShadow: premiumColors.shadowGold,
+        borderColor: safeAlpha(premiumColors.gold, 0.3),
+        bgcolor: premiumColors.charcoal
       }
-    });
-    
-    const finalY = doc.lastAutoTable.finalY + 10;
-    
-    // === TOTAL SECTION ===
-    doc.setFillColor(...darkColor);
-    doc.rect(120, finalY, 75, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SOUS-TOTAL:', 125, finalY + 10);
-    doc.text('LIVRAISON:', 125, finalY + 20);
-    
-    doc.setTextColor(...goldColor);
-    doc.setFontSize(11);
-    doc.text(`${invoiceData.subtotal?.toFixed(2) || 0} DT`, 185, finalY + 10, { align: 'right' });
-    doc.text(`${invoiceData.shippingCost?.toFixed(2) || 0} DT`, 185, finalY + 20, { align: 'right' });
-    
-    doc.setDrawColor(...goldColor);
-    doc.setLineWidth(0.5);
-    doc.line(125, finalY + 25, 190, finalY + 25);
-    
-    doc.setTextColor(...goldColor);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL:', 125, finalY + 35);
-    doc.text(`${invoiceData.total?.toFixed(2) || 0} DT`, 185, finalY + 35, { align: 'right' });
-    
-    // === PAYMENT INFO ===
-    doc.setTextColor(...darkColor);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INFORMATIONS DE PAIEMENT', 15, finalY + 60);
-    
-    doc.setTextColor(...textGray);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Banque: ${companyInfo.bankName}`, 15, finalY + 70);
-    doc.text(`IBAN: ${companyInfo.iban}`, 15, finalY + 77);
-    doc.text(`SWIFT: ${companyInfo.swift}`, 15, finalY + 84);
-    doc.text(`Mode: ${invoiceData.paymentMethod === 'cash' ? 'Paiement à la livraison' : 
-                     invoiceData.paymentMethod === 'card' ? 'Carte bancaire' : 'Virement'}`, 15, finalY + 94);
-    
-    // === NOTES ===
-    if (invoiceData.notes) {
-      doc.setTextColor(...darkColor);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('NOTES:', 15, finalY + 110);
-      
-      doc.setTextColor(...textGray);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'italic');
-      doc.text(invoiceData.notes, 15, finalY + 120);
-    }
-    
-    // === FOOTER ===
-    doc.setFillColor(...lightGray);
-    doc.rect(0, 280, 210, 20, 'F');
-    
-    doc.setTextColor(...textGray);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Facture générée le ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 15, 290);
-    doc.text(companyInfo.website, 180, 290, { align: 'right' });
-    doc.text('Merci de votre confiance !', 105, 297, { align: 'center' });
-    
-    return doc;
-  }
-}
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', mb: 1 }}>
+              {title}
+            </Typography>
+            <Typography variant="h4" sx={{ color: premiumColors.white, fontFamily: "'Fjalla One', sans-serif", fontWeight: 700, fontSize: '2rem', lineHeight: 1.2, mb: 0.5 }}>
+              {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
+            </Typography>
+            {subtitle && (
+              <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.75rem' }}>
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
+          <Avatar sx={{ bgcolor: safeAlpha(color || premiumColors.gold, 0.15), color: color || premiumColors.gold, width: 56, height: 56, borderRadius: 2, '& svg': { fontSize: '2rem' } }}>
+            {icon}
+          </Avatar>
+        </Box>
+      </CardContent>
+    </Card>
+  </Zoom>
+));
 
-// ============ INVOICE CARD COMPONENT ============
-const InvoiceCard = ({ invoice, onView, onDownload, onStatusUpdate, onDelete }) => {
+// ============ ORDER CARD COMPONENT ============
+const OrderCard = React.memo(({ order, onView, onStatusUpdate, onDelete, onGeneratePDF }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const status = invoiceStatusConfig[invoice.status] || invoiceStatusConfig.pending;
   const userRole = localStorage.getItem('userRole');
+  const status = statusConfig[order?.status] || statusConfig.pending;
 
   const handleMenuOpen = (event) => {
     event.stopPropagation();
@@ -512,314 +211,152 @@ const InvoiceCard = ({ invoice, onView, onDownload, onStatusUpdate, onDelete }) 
   const handleMenuClose = () => setAnchorEl(null);
   
   const handleStatusChange = (newStatus) => {
-    onStatusUpdate(invoice._id, newStatus);
+    if (order?._id) {
+      onStatusUpdate(order._id, newStatus);
+    }
     handleMenuClose();
   };
 
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
-    onDelete(invoice);
-  };
-
-  const handleDownloadClick = (e) => {
-    e.stopPropagation();
-    onDownload(invoice);
-  };
+  if (!order) return null;
 
   return (
     <Zoom in timeout={400}>
-      <Paper
-        elevation={0}
-        onClick={() => onView(invoice)}
-        sx={{
-          p: 2.5,
-          mb: 2,
-          bgcolor: premiumColors.surface,
-          border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
-          borderRadius: 3,
-          position: 'relative',
-          overflow: 'hidden',
-          cursor: 'pointer',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '6px',
-            height: '100%',
-            background: `linear-gradient(180deg, ${status.color}, ${premiumColors.gold})`,
-            opacity: 0.8
-          },
-          '&:hover': {
-            transform: 'translateY(-4px) scale(1.01)',
-            boxShadow: premiumColors.shadowGold,
-            borderColor: alpha(premiumColors.gold, 0.3),
-            bgcolor: premiumColors.charcoal,
-            '& .invoice-number': {
-              color: premiumColors.gold
-            }
-          }
-        }}
-      >
+      <Paper elevation={0} onClick={() => onView(order)} sx={{
+        p: 2.5, mb: 2, bgcolor: premiumColors.surface,
+        border: `1px solid ${safeAlpha(premiumColors.gold, 0.15)}`,
+        borderRadius: 3, position: 'relative', overflow: 'hidden',
+        cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        opacity: order.status === 'cancelled' ? 0.8 : 1,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '6px',
+          height: '100%',
+          background: `linear-gradient(180deg, ${status.color || premiumColors.gold}, ${premiumColors.gold})`,
+          opacity: 0.8
+        },
+        '&:hover': {
+          transform: 'translateY(-4px) scale(1.01)',
+          boxShadow: premiumColors.shadowGold,
+          borderColor: safeAlpha(premiumColors.gold, 0.3),
+          bgcolor: premiumColors.charcoal
+        }
+      }}>
         <Grid container spacing={2} alignItems="center">
-          {/* Invoice Info */}
+          {/* Order Info */}
           <Grid item xs={12} md={2.5}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar
-                sx={{
-                  bgcolor: alpha(premiumColors.gold, 0.1),
-                  color: premiumColors.gold,
-                  width: 52,
-                  height: 52,
-                  borderRadius: 2
-                }}
-              >
-                <Receipt />
-              </Avatar>
+              <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                badgeContent={
+                  <Tooltip title={status.label}>
+                    <Avatar sx={{ bgcolor: status.color || premiumColors.gold, width: 16, height: 16, border: `2px solid ${premiumColors.surface}` }}>
+                      {status.icon}
+                    </Avatar>
+                  </Tooltip>
+                }>
+                <Avatar sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.1), color: premiumColors.gold, width: 52, height: 52, borderRadius: 2, fontSize: '1.3rem', fontWeight: 700 }}>
+                  {order.orderNumber?.slice(-4) || 'N/A'}
+                </Avatar>
+              </Badge>
               <Box>
-                <Typography
-                  className="invoice-number"
-                  sx={{
-                    color: premiumColors.white,
-                    fontFamily: "'Fjalla One', sans-serif",
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    transition: 'color 0.3s ease',
-                    mb: 0.5
-                  }}
-                >
-                  {invoice.invoiceNumber || `FACT-${invoice._id?.slice(-6)}`}
+                <Typography sx={{ color: premiumColors.white, fontFamily: "'Fjalla One', sans-serif", fontSize: '1rem', fontWeight: 700, mb: 0.5 }}>
+                  {order.orderNumber || 'N/A'}
                 </Typography>
-                <Typography
-                  sx={{
-                    color: premiumColors.textMuted,
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5
-                  }}
-                >
-                  <CalendarToday sx={{ fontSize: '0.7rem' }} />
-                  {format(new Date(invoice.createdAt), 'dd/MM/yyyy')}
+                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Person sx={{ fontSize: '0.7rem' }} />
+                  {order.customer?.fullName?.length > 20 ? `${order.customer.fullName.substring(0, 20)}...` : order.customer?.fullName || 'N/A'}
                 </Typography>
               </Box>
             </Box>
           </Grid>
 
-          {/* Customer Info */}
-          <Grid item xs={12} md={3}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Avatar
-                sx={{
-                  bgcolor: alpha(premiumColors.gold, 0.05),
-                  color: premiumColors.gold,
-                  width: 44,
-                  height: 44,
-                  borderRadius: 1.5
-                }}
-              >
-                <Person />
-              </Avatar>
-              <Box>
-                <Typography
-                  sx={{
-                    color: premiumColors.white,
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    mb: 0.25
-                  }}
-                >
-                  {invoice.customer?.fullName || 'Client'}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: premiumColors.textMuted,
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5
-                  }}
-                >
-                  <ShoppingBag sx={{ fontSize: '0.7rem' }} />
-                  {invoice.items?.length || 0} article{(invoice.items?.length || 0) > 1 ? 's' : ''}
-                </Typography>
+          {/* Customer & Items */}
+          <Grid item xs={12} md={3.5}>
+            <Box sx={{ pl: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Chip size="small" label={`${order.items?.length || 0} article${order.items?.length > 1 ? 's' : ''}`}
+                  sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.1), color: premiumColors.gold, fontSize: '0.65rem', height: 22 }} />
+                {order.paymentMethod && paymentConfig[order.paymentMethod] && (
+                  <Chip icon={paymentConfig[order.paymentMethod]?.icon} label={paymentConfig[order.paymentMethod]?.label}
+                    size="small" sx={{ bgcolor: paymentConfig[order.paymentMethod]?.bgColor || safeAlpha(premiumColors.gold, 0.1), color: paymentConfig[order.paymentMethod]?.color || premiumColors.gold, fontSize: '0.65rem', height: 22 }} />
+                )}
               </Box>
+              <Typography sx={{ color: premiumColors.textSecondary, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Email sx={{ fontSize: '0.7rem' }} /> {order.customer?.email || 'N/A'}
+              </Typography>
             </Box>
           </Grid>
 
-          {/* Amount */}
-          <Grid item xs={12} md={2}>
+          {/* Total & Date */}
+          <Grid item xs={12} md={2.5}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontSize: '1.3rem',
-                  fontWeight: 700,
-                  lineHeight: 1.2
-                }}
-              >
-                {invoice.total?.toFixed(2)} DT
+              <Typography sx={{ color: premiumColors.gold, fontFamily: "'Fjalla One', sans-serif", fontSize: '1.1rem', fontWeight: 700, mb: 0.5 }}>
+                {order.total?.toLocaleString('fr-FR') || '0'} DT
               </Typography>
-              <Typography
-                sx={{
-                  color: premiumColors.textMuted,
-                  fontSize: '0.7rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}
-              >
-                {invoice.paymentMethod === 'cash' ? 'Paiement livraison' : 
-                 invoice.paymentMethod === 'card' ? 'Carte' : 'Virement'}
+              <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                <CalendarToday sx={{ fontSize: '0.7rem' }} />
+                {order.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy') : 'N/A'}
               </Typography>
             </Box>
           </Grid>
 
-          {/* Status & Actions */}
-          <Grid item xs={12} md={4.5}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1.5 }}>
-              {/* Status Chip */}
-              <Chip
-                icon={status.icon}
-                label={status.label}
-                sx={{
-                  bgcolor: status.bgColor,
-                  color: status.color,
-                  border: `1px solid ${alpha(status.color, 0.3)}`,
-                  fontWeight: 700,
-                  fontSize: '0.8rem',
-                  height: 32
-                }}
-              />
-
-              {/* Download PDF Button */}
-              <Tooltip title="Télécharger PDF" arrow>
-                <IconButton
-                  onClick={handleDownloadClick}
-                  sx={{
-                    color: premiumColors.gold,
-                    bgcolor: alpha(premiumColors.gold, 0.08),
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
-                    '&:hover': {
-                      bgcolor: alpha(premiumColors.gold, 0.2),
-                      transform: 'scale(1.1)'
-                    }
-                  }}
-                >
-                  <PictureAsPdf fontSize="small" />
+          {/* Actions */}
+          <Grid item xs={12} md={3.5}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+              {/* PDF Button */}
+              <Tooltip title="Générer PDF" arrow>
+                <IconButton onClick={(e) => { e.stopPropagation(); onGeneratePDF(order); }}
+                  sx={{ color: premiumColors.textSecondary, bgcolor: safeAlpha(premiumColors.gold, 0.08), width: 36, height: 36, borderRadius: 2,
+                    '&:hover': { bgcolor: safeAlpha(premiumColors.gold, 0.2), color: premiumColors.gold } }}>
+                  <Receipt fontSize="small" />
                 </IconButton>
               </Tooltip>
 
               {/* View Button */}
               <Tooltip title="Voir détails" arrow>
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onView(invoice);
-                  }}
-                  sx={{
-                    color: premiumColors.textSecondary,
-                    bgcolor: alpha(premiumColors.gold, 0.08),
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
-                    '&:hover': {
-                      bgcolor: alpha(premiumColors.gold, 0.2),
-                      color: premiumColors.gold
-                    }
-                  }}
-                >
+                <IconButton onClick={(e) => { e.stopPropagation(); onView(order); }}
+                  sx={{ color: premiumColors.textSecondary, bgcolor: safeAlpha(premiumColors.gold, 0.08), width: 36, height: 36, borderRadius: 2,
+                    '&:hover': { bgcolor: safeAlpha(premiumColors.gold, 0.2), color: premiumColors.gold } }}>
                   <Visibility fontSize="small" />
                 </IconButton>
               </Tooltip>
 
               {/* Status Update Menu */}
-              <Button
-                variant="contained"
-                onClick={handleMenuOpen}
-                endIcon={<MoreVert />}
-                size="small"
-                sx={{
-                  bgcolor: alpha(premiumColors.gold, 0.9),
-                  color: premiumColors.noir,
-                  px: 2,
-                  py: 0.5,
-                  fontSize: '0.7rem',
-                  fontWeight: 800,
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  '&:hover': {
-                    bgcolor: premiumColors.gold
-                  }
-                }}
-              >
-                Statut
-              </Button>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                onClick={(e) => e.stopPropagation()}
-                PaperProps={{
-                  sx: {
-                    bgcolor: premiumColors.surface,
-                    border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-                    borderRadius: 2,
-                    mt: 1,
-                    minWidth: 180
-                  }
-                }}
-              >
-                {Object.keys(invoiceStatusConfig).map((statusKey) => (
-                  <MenuItem
-                    key={statusKey}
-                    onClick={() => handleStatusChange(statusKey)}
-                    sx={{
-                      color: premiumColors.white,
-                      gap: 1,
-                      '&:hover': {
-                        bgcolor: invoiceStatusConfig[statusKey]?.bgColor
-                      }
-                    }}
-                  >
-                    <Avatar
-                      sx={{
-                        bgcolor: alpha(invoiceStatusConfig[statusKey].color, 0.1),
-                        color: invoiceStatusConfig[statusKey].color,
-                        width: 28,
-                        height: 28,
-                        borderRadius: 1
-                      }}
-                    >
-                      {invoiceStatusConfig[statusKey].icon}
-                    </Avatar>
-                    <Typography sx={{ fontSize: '0.85rem' }}>
-                      {invoiceStatusConfig[statusKey].label}
-                    </Typography>
-                  </MenuItem>
-                ))}
-              </Menu>
+              {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                <>
+                  <Button variant="contained" onClick={handleMenuOpen} size="small"
+                    sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.9), color: premiumColors.noir, px: 2, py: 0.5, fontSize: '0.7rem', fontWeight: 800,
+                      textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: premiumColors.gold } }}>
+                    Mettre à jour
+                  </Button>
+                  <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}
+                    onClick={(e) => e.stopPropagation()} PaperProps={{
+                      sx: { bgcolor: premiumColors.surface, border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`, borderRadius: 2, mt: 1, minWidth: 200 }
+                    }}>
+                    {Object.entries(statusConfig).map(([key, config]) => {
+                      if (key === order.status || key === 'cancelled') return null;
+                      return (
+                        <MenuItem key={key} onClick={() => handleStatusChange(key)}
+                          sx={{ color: premiumColors.white, gap: 1, '&:hover': { bgcolor: config.bgColor || safeAlpha(premiumColors.gold, 0.1) } }}>
+                          {config.icon}
+                          <Box>
+                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{config.label}</Typography>
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
+                  </Menu>
+                </>
+              )}
 
               {/* Delete Button - Super Admin only */}
               {userRole === 'super-admin' && (
                 <Tooltip title="Supprimer" arrow>
-                  <IconButton
-                    onClick={handleDeleteClick}
-                    sx={{
-                      color: alpha(premiumColors.cancelled, 0.7),
-                      bgcolor: alpha(premiumColors.cancelled, 0.08),
-                      width: 36,
-                      height: 36,
-                      borderRadius: 2,
-                      '&:hover': {
-                        bgcolor: alpha(premiumColors.cancelled, 0.15),
-                        color: premiumColors.cancelled
-                      }
-                    }}
-                  >
+                  <IconButton onClick={(e) => { e.stopPropagation(); onDelete(order); }}
+                    sx={{ color: safeAlpha(premiumColors.cancelled, 0.7), bgcolor: safeAlpha(premiumColors.cancelled, 0.08), width: 36, height: 36, borderRadius: 2,
+                      '&:hover': { bgcolor: safeAlpha(premiumColors.cancelled, 0.15), color: premiumColors.cancelled } }}>
                     <Delete fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -830,16 +367,16 @@ const InvoiceCard = ({ invoice, onView, onDownload, onStatusUpdate, onDelete }) 
       </Paper>
     </Zoom>
   );
-};
+});
 
-// ============ INVOICE DETAILS MODAL ============
-const InvoiceDetailsModal = ({ open, onClose, invoice, onDownload, onStatusUpdate, onDelete }) => {
+// ============ ORDER DETAILS MODAL ============
+const OrderDetailsModal = React.memo(({ open, onClose, order, onStatusUpdate, onDelete, onGeneratePDF }) => {
   const [statusAnchorEl, setStatusAnchorEl] = useState(null);
   const userRole = localStorage.getItem('userRole');
   
-  if (!invoice) return null;
+  if (!order) return null;
 
-  const status = invoiceStatusConfig[invoice.status] || invoiceStatusConfig.pending;
+  const status = statusConfig[order.status] || statusConfig.pending;
 
   const handleStatusMenuOpen = (event) => {
     event.stopPropagation();
@@ -849,787 +386,319 @@ const InvoiceDetailsModal = ({ open, onClose, invoice, onDownload, onStatusUpdat
   const handleStatusMenuClose = () => setStatusAnchorEl(null);
   
   const handleStatusChange = (newStatus) => {
-    onStatusUpdate(invoice._id, newStatus);
+    if (order?._id) {
+      onStatusUpdate(order._id, newStatus);
+    }
     handleStatusMenuClose();
   };
 
-  const handleDeleteClick = () => {
-    onDelete(invoice);
-  };
+  const steps = ['En attente', 'Confirmée', 'En préparation', 'Expédiée', 'Livrée'];
+  const activeStep = statusConfig[order.status]?.step ?? 0;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: premiumColors.surface,
-          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-          borderRadius: 3,
-          boxShadow: premiumColors.shadowXl
-        }
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
+      PaperProps={{ sx: { bgcolor: premiumColors.surface, border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`, borderRadius: 3, boxShadow: premiumColors.shadowGold } }}>
+      
       {/* Header */}
-      <DialogTitle sx={{ 
-        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
-        p: 3
-      }}>
+      <DialogTitle sx={{ borderBottom: `1px solid ${safeAlpha(premiumColors.gold, 0.15)}`, p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: alpha(premiumColors.gold, 0.1),
-                color: premiumColors.gold,
-                width: 56,
-                height: 56,
-                borderRadius: 2
-              }}
-            >
-              <Receipt sx={{ fontSize: '1.8rem' }} />
+            <Avatar sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.1), color: premiumColors.gold, width: 56, height: 56, borderRadius: 2, fontSize: '1.5rem', fontWeight: 700 }}>
+              {order.orderNumber?.slice(-4) || 'N/A'}
             </Avatar>
             <Box>
-              <Typography
-                variant="h5"
-                sx={{
-                  color: premiumColors.white,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontWeight: 700,
-                  mb: 0.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                {invoice.invoiceNumber || `FACT-${invoice._id?.slice(-6)}`}
-                <Chip
-                  icon={status.icon}
-                  label={status.label}
-                  size="small"
-                  sx={{
-                    bgcolor: status.bgColor,
-                    color: status.color,
-                    border: `1px solid ${alpha(status.color, 0.3)}`,
-                    height: 24
-                  }}
-                />
+              <Typography variant="h5" sx={{ color: premiumColors.white, fontFamily: "'Fjalla One', sans-serif", fontWeight: 700, mb: 0.5 }}>
+                Commande {order.orderNumber || 'N/A'}
               </Typography>
               <Box sx={{ display: 'flex', gap: 3 }}>
-                <Typography
-                  sx={{
-                    color: premiumColors.textMuted,
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5
-                  }}
-                >
+                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <CalendarToday sx={{ fontSize: '0.8rem' }} />
-                  {format(new Date(invoice.createdAt), 'dd MMMM yyyy', { locale: fr })}
+                  {order.createdAt ? format(new Date(order.createdAt), 'dd MMMM yyyy', { locale: fr }) : 'N/A'}
                 </Typography>
-                {invoice.dueDate && (
-                  <Typography
-                    sx={{
-                      color: premiumColors.textMuted,
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5
-                    }}
-                  >
-                    <AccessTime sx={{ fontSize: '0.8rem' }} />
-                    Échéance: {format(new Date(invoice.dueDate), 'dd/MM/yyyy')}
-                  </Typography>
-                )}
+                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <AccessTime sx={{ fontSize: '0.8rem' }} />
+                  {order.createdAt ? format(new Date(order.createdAt), 'HH:mm', { locale: fr }) : 'N/A'}
+                </Typography>
               </Box>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Télécharger PDF">
-              <IconButton
-                onClick={() => onDownload(invoice)}
-                sx={{
-                  color: premiumColors.gold,
-                  bgcolor: alpha(premiumColors.gold, 0.1),
-                  width: 40,
-                  height: 40,
-                  '&:hover': {
-                    bgcolor: alpha(premiumColors.gold, 0.2)
-                  }
-                }}
-              >
-                <PictureAsPdf />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Imprimer">
-              <IconButton
-                sx={{
-                  color: premiumColors.gold,
-                  bgcolor: alpha(premiumColors.gold, 0.1),
-                  width: 40,
-                  height: 40,
-                  '&:hover': {
-                    bgcolor: alpha(premiumColors.gold, 0.2)
-                  }
-                }}
-              >
-                <Print />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Fermer">
-              <IconButton
-                onClick={onClose}
-                sx={{
-                  color: premiumColors.textMuted,
-                  bgcolor: alpha(premiumColors.gold, 0.05),
-                  width: 40,
-                  height: 40,
-                  '&:hover': {
-                    bgcolor: alpha(premiumColors.gold, 0.15),
-                    color: premiumColors.gold
-                  }
-                }}
-              >
-                <Close />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          <IconButton onClick={onClose} sx={{ color: premiumColors.textMuted, bgcolor: safeAlpha(premiumColors.gold, 0.05), width: 40, height: 40,
+            '&:hover': { bgcolor: safeAlpha(premiumColors.gold, 0.15), color: premiumColors.gold } }}>
+            <Close />
+          </IconButton>
         </Box>
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
         <Grid container spacing={3}>
-          {/* Company Info */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                borderRadius: 2
-              }}
-            >
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Store sx={{ fontSize: '1rem' }} />
-                VENDEUR
-              </Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Avatar
-                  sx={{
-                    bgcolor: alpha(premiumColors.gold, 0.1),
-                    color: premiumColors.gold,
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5
-                  }}
-                >
-                  <Business />
-                </Avatar>
-                <Box>
-                  <Typography sx={{ color: premiumColors.white, fontWeight: 700 }}>
-                    {companyInfo.name}
-                  </Typography>
-                  <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem' }}>
-                    {companyInfo.regNumber}
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <LocationOn sx={{ fontSize: '0.9rem' }} /> {companyInfo.address}
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <Phone sx={{ fontSize: '0.9rem' }} /> {companyInfo.phone}
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <Email sx={{ fontSize: '0.9rem' }} /> {companyInfo.email}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Customer Info */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                borderRadius: 2
-              }}
-            >
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Person sx={{ fontSize: '1rem' }} />
-                CLIENT
-              </Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Avatar
-                  sx={{
-                    bgcolor: alpha(premiumColors.gold, 0.1),
-                    color: premiumColors.gold,
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5,
-                    fontSize: '1.2rem',
-                    fontWeight: 700
-                  }}
-                >
-                  {invoice.customer?.fullName?.charAt(0) || 'C'}
-                </Avatar>
-                <Box>
-                  <Typography sx={{ color: premiumColors.white, fontWeight: 700 }}>
-                    {invoice.customer?.fullName || 'Client'}
-                  </Typography>
-                  {invoice.customer?.clothingSize && (
-                    <Chip
-                      label={`Taille: ${invoice.customer.clothingSize}`}
-                      size="small"
-                      sx={{
-                        bgcolor: alpha(premiumColors.gold, 0.1),
-                        color: premiumColors.goldLight,
-                        height: 20,
-                        fontSize: '0.65rem',
-                        mt: 0.5
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <Email sx={{ fontSize: '0.9rem' }} /> {invoice.customer?.email || '—'}
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <Phone sx={{ fontSize: '0.9rem' }} /> {invoice.customer?.phone || '—'}
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', display: 'flex', gap: 1 }}>
-                  <LocationOn sx={{ fontSize: '0.9rem' }} /> {invoice.customer?.address || '—'}
-                  {invoice.customer?.city && `, ${invoice.customer.city}`}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Items Table */}
+          {/* Status Stepper */}
           <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                borderRadius: 2
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography
-                  sx={{
-                    color: premiumColors.gold,
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <ShoppingBag sx={{ fontSize: '1rem' }} />
-                  ARTICLES FACTURÉS
-                </Typography>
-                <Chip
-                  label={`${invoice.items?.length || 0} article${invoice.items?.length > 1 ? 's' : ''}`}
-                  sx={{
-                    bgcolor: alpha(premiumColors.gold, 0.1),
-                    color: premiumColors.goldLight,
-                    height: 28,
-                    fontSize: '0.75rem',
-                    fontWeight: 600
-                  }}
-                />
-              </Box>
+            <Paper elevation={0} sx={{ p: 3, bgcolor: safeAlpha(premiumColors.surfaceLight, 0.5), border: `1px solid ${safeAlpha(premiumColors.gold, 0.1)}`, borderRadius: 2 }}>
+              <Stepper activeStep={activeStep} alternativeLabel connector={<StepConnector sx={{ '& .MuiStepConnector-line': { borderColor: safeAlpha(premiumColors.gold, 0.3) } }} />}>
+                {steps.map((label, index) => (
+                  <Step key={label}>
+                    <StepLabel StepIconProps={{ sx: { '&.Mui-active': { color: premiumColors.gold }, '&.Mui-completed': { color: premiumColors.delivered } } }}>
+                      <Typography sx={{ color: index <= activeStep ? premiumColors.white : premiumColors.textMuted, fontSize: '0.8rem' }}>
+                        {label}
+                      </Typography>
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            </Paper>
+          </Grid>
 
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ 
-                        color: premiumColors.textMuted, 
-                        fontSize: '0.7rem', 
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`
-                      }}>
-                        Produit
-                      </TableCell>
-                      <TableCell align="center" sx={{ 
-                        color: premiumColors.textMuted, 
-                        fontSize: '0.7rem', 
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`
-                      }}>
-                        Qté
-                      </TableCell>
-                      <TableCell align="right" sx={{ 
-                        color: premiumColors.textMuted, 
-                        fontSize: '0.7rem', 
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`
-                      }}>
-                        Prix unitaire
-                      </TableCell>
-                      <TableCell align="right" sx={{ 
-                        color: premiumColors.textMuted, 
-                        fontSize: '0.7rem', 
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.2)}`
-                      }}>
-                        Total
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {invoice.items?.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {item.mainImage && (
-                              <Avatar
-                                src={typeof item.mainImage === 'string' ? item.mainImage : item.mainImage?.url}
-                                variant="rounded"
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-                                  borderRadius: 1
-                                }}
-                              />
-                            )}
-                            <Box>
-                              <Typography sx={{ color: premiumColors.white, fontWeight: 600, fontSize: '0.9rem' }}>
-                                {item.name}
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                                {item.selectedSize && (
-                                  <Chip
-                                    label={item.selectedSize}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: alpha(premiumColors.gold, 0.1),
-                                      color: premiumColors.gold,
-                                      fontSize: '0.65rem',
-                                      height: 20
-                                    }}
-                                  />
-                                )}
-                                {item.selectedColor && (
-                                  <Chip
-                                    label={item.selectedColor}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: alpha(premiumColors.gold, 0.1),
-                                      color: premiumColors.gold,
-                                      fontSize: '0.65rem',
-                                      height: 20
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell align="center" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
-                          <Typography sx={{ color: premiumColors.white, fontWeight: 700 }}>
-                            {item.quantity}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
-                          <Typography sx={{ color: premiumColors.textSecondary }}>
-                            {item.price?.toFixed(2)} DT
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right" sx={{ borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}` }}>
-                          <Typography sx={{ color: premiumColors.gold, fontWeight: 700 }}>
-                            {(item.price * item.quantity).toFixed(2)} DT
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+          {/* Customer Information */}
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, bgcolor: safeAlpha(premiumColors.surfaceLight, 0.5), border: `1px solid ${safeAlpha(premiumColors.gold, 0.1)}`, borderRadius: 2, height: '100%' }}>
+              <Typography sx={{ color: premiumColors.gold, fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Person sx={{ fontSize: '1rem' }} /> INFORMATIONS CLIENT
+              </Typography>
 
-              <Divider sx={{ borderColor: alpha(premiumColors.gold, 0.2), my: 3 }} />
-
-              {/* Totals */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Box sx={{ width: '300px' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography sx={{ color: premiumColors.textMuted }}>Sous-total</Typography>
-                    <Typography sx={{ color: premiumColors.white }}>{invoice.subtotal?.toFixed(2)} DT</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(premiumColors.info, 0.1), color: premiumColors.info, width: 40, height: 40, borderRadius: 1.5 }}>
+                    <Person sx={{ fontSize: '1.1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Nom complet</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem', fontWeight: 500 }}>{order.customer?.fullName || 'N/A'}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography sx={{ color: premiumColors.textMuted }}>Livraison</Typography>
-                    <Typography sx={{ color: premiumColors.white }}>{invoice.shippingCost?.toFixed(2)} DT</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(premiumColors.info, 0.1), color: premiumColors.info, width: 40, height: 40, borderRadius: 1.5 }}>
+                    <Email sx={{ fontSize: '1.1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Email</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem', wordBreak: 'break-all' }}>{order.customer?.email || 'N/A'}</Typography>
                   </Box>
-                  {invoice.tax > 0 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography sx={{ color: premiumColors.textMuted }}>TVA (19%)</Typography>
-                      <Typography sx={{ color: premiumColors.white }}>{invoice.tax?.toFixed(2)} DT</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(premiumColors.success, 0.1), color: premiumColors.success, width: 40, height: 40, borderRadius: 1.5 }}>
+                    <Phone sx={{ fontSize: '1.1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Téléphone</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{order.customer?.phone || 'N/A'}</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(premiumColors.warning, 0.1), color: premiumColors.warning, width: 40, height: 40, borderRadius: 1.5 }}>
+                    <LocationOn sx={{ fontSize: '1.1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Adresse</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>
+                      {order.customer?.address || 'N/A'}, {order.customer?.city || 'N/A'} {order.customer?.postalCode || ''}, {order.customer?.country || 'Tunisie'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {order.customer?.clothingSize && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.1), color: premiumColors.gold, width: 40, height: 40, borderRadius: 1.5 }}>
+                      <ShoppingBag sx={{ fontSize: '1.1rem' }} />
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Taille</Typography>
+                      <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{order.customer?.clothingSize}</Typography>
                     </Box>
-                  )}
-                  <Divider sx={{ borderColor: alpha(premiumColors.gold, 0.2), my: 2 }} />
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Order Summary */}
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, bgcolor: safeAlpha(premiumColors.surfaceLight, 0.5), border: `1px solid ${safeAlpha(premiumColors.gold, 0.1)}`, borderRadius: 2, height: '100%' }}>
+              <Typography sx={{ color: premiumColors.gold, fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AttachMoney sx={{ fontSize: '1rem' }} /> RÉCAPITULATIF
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(status.color || premiumColors.gold, 0.1), color: status.color || premiumColors.gold, width: 40, height: 40, borderRadius: 1.5 }}>
+                    {status.icon}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Statut</Typography>
+                    <Chip icon={status.icon} label={status.label} sx={{ bgcolor: status.bgColor || safeAlpha(premiumColors.gold, 0.1), color: status.color || premiumColors.gold, border: `1px solid ${safeAlpha(status.color || premiumColors.gold, 0.3)}`, fontWeight: 700 }} />
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: safeAlpha(paymentConfig[order.paymentMethod]?.color || premiumColors.gold, 0.1), color: paymentConfig[order.paymentMethod]?.color || premiumColors.gold, width: 40, height: 40, borderRadius: 1.5 }}>
+                    {paymentConfig[order.paymentMethod]?.icon || <Payment />}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem', mb: 0.25 }}>Mode de paiement</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{paymentConfig[order.paymentMethod]?.label || order.paymentMethod || 'N/A'}</Typography>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ borderColor: safeAlpha(premiumColors.gold, 0.1), my: 1 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>Sous-total</Typography>
+                  <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{order.subtotal?.toFixed(2) || '0'} DT</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>Livraison</Typography>
+                  <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{order.shippingCost?.toFixed(2) || '7.00'} DT</Typography>
+                </Box>
+
+                {order.tax > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography sx={{ color: premiumColors.white, fontSize: '1.1rem', fontWeight: 700 }}>
-                      TOTAL
-                    </Typography>
-                    <Typography sx={{ color: premiumColors.gold, fontSize: '1.5rem', fontWeight: 800 }}>
-                      {invoice.total?.toFixed(2)} DT
-                    </Typography>
+                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.85rem' }}>TVA</Typography>
+                    <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem' }}>{order.tax?.toFixed(2)} DT</Typography>
                   </Box>
+                )}
+
+                <Divider sx={{ borderColor: safeAlpha(premiumColors.gold, 0.2), my: 1 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography sx={{ color: premiumColors.gold, fontSize: '1.1rem', fontWeight: 700 }}>Total</Typography>
+                  <Typography sx={{ color: premiumColors.gold, fontSize: '1.3rem', fontWeight: 800, fontFamily: "'Fjalla One', sans-serif" }}>
+                    {order.total?.toFixed(2) || '0'} DT
+                  </Typography>
                 </Box>
               </Box>
             </Paper>
           </Grid>
 
-          {/* Payment Info */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                borderRadius: 2
-              }}
-            >
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Payment sx={{ fontSize: '1rem' }} />
-                INFORMATIONS DE PAIEMENT
+          {/* Order Items */}
+          <Grid item xs={12}>
+            <Paper elevation={0} sx={{ p: 3, bgcolor: safeAlpha(premiumColors.surfaceLight, 0.5), border: `1px solid ${safeAlpha(premiumColors.gold, 0.1)}`, borderRadius: 2 }}>
+              <Typography sx={{ color: premiumColors.gold, fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ShoppingBag sx={{ fontSize: '1rem' }} /> ARTICLES COMMANDÉS ({order.items?.length || 0})
               </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: alpha(premiumColors.gold, 0.1),
-                      color: premiumColors.gold,
-                      width: 36,
-                      height: 36,
-                      borderRadius: 1.5
-                    }}
-                  >
-                    <Payment sx={{ fontSize: '1rem' }} />
-                  </Avatar>
-                  <Box>
-                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem' }}>
-                      Mode de paiement
-                    </Typography>
-                    <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                      {invoice.paymentMethod === 'cash' ? 'Paiement à la livraison' : 
-                       invoice.paymentMethod === 'card' ? 'Carte bancaire' : 'Virement bancaire'}
-                    </Typography>
-                  </Box>
+
+              {order.items && order.items.length > 0 ? (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { borderBottom: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`, color: premiumColors.textMuted, fontWeight: 600, fontSize: '0.75rem' } }}>
+                        <TableCell>Produit</TableCell>
+                        <TableCell align="center">Taille</TableCell>
+                        <TableCell align="center">Couleur</TableCell>
+                        <TableCell align="right">Prix unitaire</TableCell>
+                        <TableCell align="center">Quantité</TableCell>
+                        <TableCell align="right">Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {order.items.map((item, index) => (
+                        <TableRow key={index} sx={{ '& td': { borderBottom: `1px solid ${safeAlpha(premiumColors.gold, 0.1)}`, color: premiumColors.white } }}>
+                          <TableCell sx={{ color: premiumColors.white, fontSize: '0.85rem' }}>{item.name || 'N/A'}</TableCell>
+                          <TableCell align="center" sx={{ color: premiumColors.white, fontSize: '0.85rem' }}>{item.selectedSize || '-'}</TableCell>
+                          <TableCell align="center">
+                            {item.selectedColor ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: item.selectedColor.toLowerCase(), border: '1px solid rgba(255,255,255,0.3)' }} />
+                                <Typography sx={{ color: premiumColors.white, fontSize: '0.85rem' }}>{item.selectedColor}</Typography>
+                              </Box>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: premiumColors.white, fontSize: '0.85rem' }}>{item.price?.toFixed(2) || '0'} DT</TableCell>
+                          <TableCell align="center" sx={{ color: premiumColors.white, fontSize: '0.85rem' }}>{item.quantity || 0}</TableCell>
+                          <TableCell align="right" sx={{ color: premiumColors.gold, fontSize: '0.85rem', fontWeight: 600 }}>{((item.price || 0) * (item.quantity || 0)).toFixed(2)} DT</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography sx={{ color: premiumColors.textMuted, textAlign: 'center', py: 3 }}>
+                  Aucun article dans cette commande
+                </Typography>
+              )}
+
+              {order.customer?.notes && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: safeAlpha(premiumColors.info, 0.05), borderRadius: 2, border: `1px solid ${safeAlpha(premiumColors.info, 0.2)}` }}>
+                  <Typography sx={{ color: premiumColors.info, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Info sx={{ fontSize: '1rem' }} /> Notes du client
+                  </Typography>
+                  <Typography sx={{ color: premiumColors.textSecondary, fontSize: '0.9rem' }}>{order.customer?.notes}</Typography>
                 </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: alpha(premiumColors.info, 0.1),
-                      color: premiumColors.info,
-                      width: 36,
-                      height: 36,
-                      borderRadius: 1.5
-                    }}
-                  >
-                    <Verified sx={{ fontSize: '1rem' }} />
-                  </Avatar>
-                  <Box>
-                    <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.7rem' }}>
-                      Statut
-                    </Typography>
-                    <Chip
-                      icon={status.icon}
-                      label={status.label}
-                      size="small"
-                      sx={{
-                        bgcolor: status.bgColor,
-                        color: status.color,
-                        border: `1px solid ${alpha(status.color, 0.3)}`,
-                        height: 24,
-                        mt: 0.5
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </Box>
+              )}
             </Paper>
           </Grid>
-
-          {/* Bank Info */}
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                borderRadius: 2
-              }}
-            >
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Business sx={{ fontSize: '1rem' }} />
-                COORDONNÉES BANCAIRES
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem' }}>
-                  Banque: <span style={{ color: premiumColors.white, fontWeight: 600 }}>{companyInfo.bankName}</span>
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem' }}>
-                  IBAN: <span style={{ color: premiumColors.white, fontWeight: 600 }}>{companyInfo.iban}</span>
-                </Typography>
-                <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem' }}>
-                  SWIFT: <span style={{ color: premiumColors.white, fontWeight: 600 }}>{companyInfo.swift}</span>
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Notes */}
-          {invoice.notes && (
-            <Grid item xs={12}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  bgcolor: alpha(premiumColors.surfaceLight, 0.5),
-                  border: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                  borderRadius: 2
-                }}
-              >
-                <Typography
-                  sx={{
-                    color: premiumColors.gold,
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <Info sx={{ fontSize: '1rem' }} />
-                  NOTES
-                </Typography>
-                <Typography
-                  sx={{
-                    color: premiumColors.textSecondary,
-                    fontSize: '0.9rem',
-                    fontStyle: 'italic',
-                    p: 2,
-                    bgcolor: alpha(premiumColors.gold, 0.03),
-                    borderRadius: 1.5
-                  }}
-                >
-                  {invoice.notes}
-                </Typography>
-              </Paper>
-            </Grid>
-          )}
         </Grid>
       </DialogContent>
 
       {/* Footer Actions */}
-      <DialogActions sx={{ 
-        borderTop: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
-        p: 3,
-        display: 'flex',
-        justifyContent: 'space-between'
-      }}>
+      <DialogActions sx={{ borderTop: `1px solid ${safeAlpha(premiumColors.gold, 0.15)}`, p: 3, display: 'flex', justifyContent: 'space-between' }}>
         <Box>
           {userRole === 'super-admin' && (
-            <Button
-              variant="outlined"
-              onClick={handleDeleteClick}
-              startIcon={<Delete />}
-              sx={{
-                color: premiumColors.cancelled,
-                borderColor: alpha(premiumColors.cancelled, 0.3),
-                borderWidth: 1.5,
-                px: 3,
-                py: 1,
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: 2,
-                '&:hover': {
-                  borderColor: premiumColors.cancelled,
-                  bgcolor: alpha(premiumColors.cancelled, 0.1)
-                }
-              }}
-            >
+            <Button variant="outlined" onClick={() => onDelete(order)} startIcon={<Delete />}
+              sx={{ color: premiumColors.cancelled, borderColor: safeAlpha(premiumColors.cancelled, 0.3), borderWidth: 1.5, px: 3, py: 1,
+                fontSize: '0.85rem', fontWeight: 600, textTransform: 'none', borderRadius: 2,
+                '&:hover': { borderColor: premiumColors.cancelled, bgcolor: safeAlpha(premiumColors.cancelled, 0.1) } }}>
               Supprimer
             </Button>
           )}
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            onClick={() => onDownload(invoice)}
-            startIcon={<PictureAsPdf />}
-            sx={{
-              bgcolor: premiumColors.gold,
-              color: premiumColors.noir,
-              px: 3,
-              py: 1,
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              textTransform: 'none',
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: premiumColors.goldDark
-              }
-            }}
-          >
+          <Button variant="outlined" onClick={() => onGeneratePDF(order)} startIcon={<Receipt />}
+            sx={{ color: premiumColors.gold, borderColor: safeAlpha(premiumColors.gold, 0.3), borderWidth: 1.5, px: 3, py: 1,
+              fontSize: '0.85rem', fontWeight: 600, textTransform: 'none', borderRadius: 2,
+              '&:hover': { borderColor: premiumColors.gold, bgcolor: safeAlpha(premiumColors.gold, 0.1) } }}>
             Télécharger PDF
           </Button>
-          <Button
-            variant="contained"
-            onClick={onClose}
-            sx={{
-              bgcolor: premiumColors.surfaceLight,
-              color: premiumColors.white,
-              px: 4,
-              py: 1,
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              textTransform: 'none',
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: premiumColors.charcoal
-              }
-            }}
-          >
+          {order.status !== 'cancelled' && order.status !== 'delivered' && (
+            <Button variant="contained" onClick={handleStatusMenuOpen} startIcon={<LocalShipping />}
+              sx={{ bgcolor: premiumColors.gold, color: premiumColors.noir, px: 3, py: 1, fontSize: '0.85rem', fontWeight: 600,
+                textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: premiumColors.goldDark } }}>
+              Mettre à jour le statut
+            </Button>
+          )}
+          <Menu anchorEl={statusAnchorEl} open={Boolean(statusAnchorEl)} onClose={handleStatusMenuClose}
+            PaperProps={{ sx: { bgcolor: premiumColors.surface, border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`, borderRadius: 2, mt: 1, minWidth: 200 } }}>
+            {Object.entries(statusConfig).map(([key, config]) => {
+              if (key === order.status || key === 'cancelled') return null;
+              return (
+                <MenuItem key={key} onClick={() => handleStatusChange(key)}
+                  sx={{ color: premiumColors.white, gap: 1, '&:hover': { bgcolor: config.bgColor || safeAlpha(premiumColors.gold, 0.1) } }}>
+                  {config.icon}
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{config.label}</Typography>
+                </MenuItem>
+              );
+            })}
+          </Menu>
+          <Button variant="contained" onClick={onClose}
+            sx={{ bgcolor: premiumColors.gold, color: premiumColors.noir, px: 4, py: 1, fontSize: '0.9rem', fontWeight: 700,
+              textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: premiumColors.goldDark } }}>
             Fermer
           </Button>
         </Box>
       </DialogActions>
     </Dialog>
   );
-};
+});
 
 // ============ DELETE CONFIRMATION DIALOG ============
-const DeleteConfirmDialog = ({ open, onClose, onConfirm, invoice }) => {
-  if (!invoice) return null;
+const DeleteConfirmDialog = React.memo(({ open, onClose, onConfirm, order }) => {
+  if (!order) return null;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: premiumColors.surface,
-          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-          borderRadius: 3,
-          boxShadow: premiumColors.shadowXl
-        }
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
+      PaperProps={{ sx: { bgcolor: premiumColors.surface, border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`, borderRadius: 3, boxShadow: premiumColors.shadowGold } }}>
       <DialogTitle sx={{ p: 3, pb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar
-            sx={{
-              bgcolor: alpha(premiumColors.cancelled, 0.15),
-              color: premiumColors.cancelled,
-              width: 56,
-              height: 56,
-              borderRadius: 2
-            }}
-          >
+          <Avatar sx={{ bgcolor: safeAlpha(premiumColors.cancelled, 0.15), color: premiumColors.cancelled, width: 56, height: 56, borderRadius: 2 }}>
             <Warning sx={{ fontSize: '2rem' }} />
           </Avatar>
           <Box>
-            <Typography
-              variant="h5"
-              sx={{
-                color: premiumColors.white,
-                fontFamily: "'Fjalla One', sans-serif",
-                fontWeight: 700,
-                mb: 0.5
-              }}
-            >
+            <Typography variant="h5" sx={{ color: premiumColors.white, fontFamily: "'Fjalla One', sans-serif", fontWeight: 700, mb: 0.5 }}>
               Confirmer la suppression
             </Typography>
-            <Typography
-              sx={{
-                color: premiumColors.textMuted,
-                fontSize: '0.9rem'
-              }}
-            >
+            <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.9rem' }}>
               Cette action est irréversible
             </Typography>
           </Box>
@@ -1637,536 +706,230 @@ const DeleteConfirmDialog = ({ open, onClose, onConfirm, invoice }) => {
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            bgcolor: alpha(premiumColors.cancelled, 0.05),
-            border: `1px solid ${alpha(premiumColors.cancelled, 0.2)}`,
-            borderRadius: 2,
-            mb: 2
-          }}
-        >
-          <Typography
-            sx={{
-              color: premiumColors.white,
-              fontSize: '0.95rem',
-              mb: 2,
-              fontWeight: 500
-            }}
-          >
-            Êtes-vous sûr de vouloir supprimer cette facture ?
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: safeAlpha(premiumColors.cancelled, 0.05), border: `1px solid ${safeAlpha(premiumColors.cancelled, 0.2)}`, borderRadius: 2, mb: 2 }}>
+          <Typography sx={{ color: premiumColors.white, fontSize: '0.95rem', mb: 2, fontWeight: 500 }}>
+            Êtes-vous sûr de vouloir supprimer cette commande ?
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: alpha(premiumColors.gold, 0.1),
-                color: premiumColors.gold,
-                width: 48,
-                height: 48,
-                borderRadius: 1.5
-              }}
-            >
-              <Receipt />
+            <Avatar sx={{ bgcolor: safeAlpha(premiumColors.gold, 0.1), color: premiumColors.gold, width: 48, height: 48, borderRadius: 1.5 }}>
+              {order.orderNumber?.slice(-4) || 'N/A'}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  color: premiumColors.gold,
-                  fontWeight: 700,
-                  fontSize: '1rem'
-                }}
-              >
-                {invoice.invoiceNumber || `FACT-${invoice._id?.slice(-6)}`}
+              <Typography sx={{ color: premiumColors.white, fontWeight: 700, fontSize: '1rem' }}>
+                Commande {order.orderNumber || 'N/A'}
               </Typography>
-              <Typography
-                sx={{
-                  color: premiumColors.textMuted,
-                  fontSize: '0.8rem',
-                  mt: 0.25
-                }}
-              >
-                {invoice.customer?.fullName || 'Client'} • {invoice.total?.toFixed(2)} DT
+              <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.8rem', mt: 0.25 }}>
+                {order.customer?.fullName || 'N/A'} - {order.total?.toFixed(2) || '0'} DT
               </Typography>
             </Box>
           </Box>
         </Paper>
 
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: alpha(premiumColors.error, 0.05),
-            borderRadius: 2,
-            border: `1px solid ${alpha(premiumColors.error, 0.15)}`
-          }}
-        >
-          <Typography
-            sx={{
-              color: premiumColors.error,
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
+        <Box sx={{ p: 2, bgcolor: safeAlpha(premiumColors.cancelled, 0.05), borderRadius: 2, border: `1px solid ${safeAlpha(premiumColors.cancelled, 0.15)}` }}>
+          <Typography sx={{ color: premiumColors.cancelled, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 1 }}>
             <Info sx={{ fontSize: '1rem' }} />
-            Cette facture sera définitivement supprimée de la base de données
+            Cette commande sera définitivement supprimée de la base de données
           </Typography>
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 0, gap: 2 }}>
-        <Button
-          fullWidth
-          variant="outlined"
-          onClick={onClose}
-          sx={{
-            color: premiumColors.textSecondary,
-            borderColor: alpha(premiumColors.gold, 0.3),
-            borderWidth: 1.5,
-            py: 1.25,
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            textTransform: 'none',
-            borderRadius: 2,
-            '&:hover': {
-              borderColor: premiumColors.gold,
-              bgcolor: alpha(premiumColors.gold, 0.05),
-              color: premiumColors.white
-            }
-          }}
-        >
+        <Button fullWidth variant="outlined" onClick={onClose}
+          sx={{ color: premiumColors.textSecondary, borderColor: safeAlpha(premiumColors.gold, 0.3), borderWidth: 1.5, py: 1.25,
+            fontSize: '0.9rem', fontWeight: 600, textTransform: 'none', borderRadius: 2,
+            '&:hover': { borderColor: premiumColors.gold, bgcolor: safeAlpha(premiumColors.gold, 0.05), color: premiumColors.white } }}>
           Annuler
         </Button>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => {
-            onConfirm(invoice._id);
-            onClose();
-          }}
-          sx={{
-            bgcolor: premiumColors.cancelled,
-            color: premiumColors.white,
-            py: 1.25,
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            textTransform: 'none',
-            borderRadius: 2,
-            boxShadow: `0 8px 16px -4px ${alpha(premiumColors.cancelled, 0.3)}`,
-            '&:hover': {
-              bgcolor: '#dc2626',
-              transform: 'translateY(-2px)',
-              boxShadow: `0 12px 20px -8px ${alpha(premiumColors.cancelled, 0.4)}`
-            },
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-        >
+        <Button fullWidth variant="contained" onClick={() => { onConfirm(order._id); onClose(); }}
+          sx={{ bgcolor: premiumColors.cancelled, color: premiumColors.white, py: 1.25, fontSize: '0.9rem', fontWeight: 700,
+            textTransform: 'none', borderRadius: 2, boxShadow: `0 8px 16px -4px ${safeAlpha(premiumColors.cancelled, 0.3)}`,
+            '&:hover': { bgcolor: '#dc2626', transform: 'translateY(-2px)', boxShadow: `0 12px 20px -8px ${safeAlpha(premiumColors.cancelled, 0.4)}` },
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}>
           Supprimer définitivement
         </Button>
       </DialogActions>
     </Dialog>
   );
-};
+});
 
-// ============ CREATE INVOICE MODAL ============
-const CreateInvoiceModal = ({ open, onClose, onCreate }) => {
-  const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [step, setStep] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: `FACT-${format(new Date(), 'yyyyMMdd')}-${Math.floor(Math.random() * 1000)}`,
-    dueDate: format(new Date().setDate(new Date().getDate() + 30), 'yyyy-MM-dd'),
-    notes: '',
-    paymentMethod: 'cash'
-  });
-
-  useEffect(() => {
-    if (open) {
-      fetchOrders();
+// ============ IMPROVED PDF GENERATION FUNCTION ============
+const generateOrderPDF = (order) => {
+  try {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Professional header with company info
+    doc.setFillColor(32, 32, 32); // Dark gray background
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Company name with gold color
+    doc.setTextColor(212, 175, 55);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TAWAKKOL', 20, 25);
+    
+    // Invoice title
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Bon de commande', pageWidth - 20, 25, { align: 'right' });
+    
+    // Decorative line
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, pageWidth - 20, 35);
+    
+    // Order information box
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(20, 50, pageWidth - 40, 30, 3, 3, 'F');
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`COMMANDE N°: ${order?.orderNumber || 'N/A'}`, 25, 62);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${order?.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}`, 25, 72);
+    doc.text(`Statut: ${order?.status ? (statusConfig[order.status]?.label || order.status) : 'N/A'}`, pageWidth - 80, 72);
+    
+    // Customer Information Section
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(212, 175, 55);
+    doc.text('INFORMATIONS CLIENT', 20, 95);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    
+    const customer = order?.customer || {};
+    const customerInfo = [
+      `Nom: ${customer.fullName || 'N/A'}`,
+      `Email: ${customer.email || 'N/A'}`,
+      `Téléphone: ${customer.phone || 'N/A'}`,
+      `Adresse: ${customer.address || 'N/A'}, ${customer.city || 'N/A'} ${customer.postalCode || ''}`,
+      `Pays: ${customer.country || 'Tunisie'}`
+    ];
+    
+    if (customer.clothingSize) {
+      customerInfo.push(`Taille: ${customer.clothingSize}`);
     }
-  }, [open]);
-
-  const fetchOrders = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}api/orders`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        // Filter only delivered orders or pending orders
-        setOrders(data.data.filter(order => 
-          ['delivered', 'shipped', 'pending'].includes(order.status)
-        ));
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
+    
+    let yPos = 105;
+    customerInfo.forEach(line => {
+      doc.text(line, 20, yPos);
+      yPos += 7;
+    });
+    
+    // Order Items Table
+    const tableColumn = ['Produit', 'Taille', 'Couleur', 'Prix unit.', 'Qté', 'Total'];
+    const tableRows = (order?.items || []).map(item => [
+      item.name || 'N/A',
+      item.selectedSize || '-',
+      item.selectedColor || '-',
+      `${(item.price || 0).toFixed(2)} DT`,
+      (item.quantity || 0).toString(),
+      `${((item.price || 0) * (item.quantity || 0)).toFixed(2)} DT`
+    ]);
+    
+    autoTable(doc, {
+      startY: yPos + 10,
+      head: [tableColumn],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [212, 175, 55], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 10 },
+      bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 20, halign: 'center' },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 30, halign: 'right' },
+        4: { cellWidth: 15, halign: 'center' },
+        5: { cellWidth: 30, halign: 'right' }
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    // Totals box
+    const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Totals section with background
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(pageWidth - 100, finalY, 80, (order?.tax || 0) > 0 ? 45 : 35, 3, 3, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    
+    const totalsX = pageWidth - 95;
+    doc.text('Sous-total:', totalsX, finalY + 7);
+    doc.text(`${(order?.subtotal || 0).toFixed(2)} DT`, pageWidth - 25, finalY + 7, { align: 'right' });
+    
+    doc.text('Livraison:', totalsX, finalY + 14);
+    doc.text(`${(order?.shippingCost || 7).toFixed(2)} DT`, pageWidth - 25, finalY + 14, { align: 'right' });
+    
+    let totalY = finalY + 14;
+    if (order?.tax > 0) {
+      doc.text('TVA:', totalsX, finalY + 21);
+      doc.text(`${(order.tax || 0).toFixed(2)} DT`, pageWidth - 25, finalY + 21, { align: 'right' });
+      totalY = finalY + 28;
+    } else {
+      totalY = finalY + 21;
     }
-  };
-
-  const handleNext = () => {
-    setStep(step + 1);
-  };
-
-  const handleBack = () => {
-    setStep(step - 1);
-  };
-
-  const handleCreateInvoice = () => {
-    if (selectedOrder) {
-      const invoice = {
-        ...selectedOrder,
-        invoiceNumber: invoiceData.invoiceNumber,
-        dueDate: invoiceData.dueDate,
-        notes: invoiceData.notes,
-        paymentMethod: invoiceData.paymentMethod,
-        status: 'pending',
-        createdAt: new Date(),
-        isInvoice: true
-      };
-      onCreate(invoice);
+    
+    // Total with gold color
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(212, 175, 55);
+    doc.text('TOTAL:', totalsX, totalY);
+    doc.text(`${(order?.total || 0).toFixed(2)} DT`, pageWidth - 25, totalY, { align: 'right' });
+    
+    // Payment Method
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Mode de paiement: ${order?.paymentMethod ? (paymentConfig[order.paymentMethod]?.label || order.paymentMethod) : 'N/A'}`, 20, totalY + 15);
+    
+    // Notes if any
+    if (order?.customer?.notes) {
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Notes:', 20, totalY + 25);
+      doc.text(order.customer.notes, 20, totalY + 32);
     }
-  };
-
-  const filteredOrders = orders.filter(order =>
-    order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: premiumColors.surface,
-          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-          borderRadius: 3,
-          boxShadow: premiumColors.shadowXl
-        }
-      }}
-    >
-      <DialogTitle sx={{ 
-        borderBottom: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
-        p: 3
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: alpha(premiumColors.gold, 0.1),
-                color: premiumColors.gold,
-                width: 56,
-                height: 56,
-                borderRadius: 2
-              }}
-            >
-              <Receipt sx={{ fontSize: '1.8rem' }} />
-            </Avatar>
-            <Typography
-              variant="h5"
-              sx={{
-                color: premiumColors.white,
-                fontFamily: "'Fjalla One', sans-serif",
-                fontWeight: 700
-              }}
-            >
-              Créer une nouvelle facture
-            </Typography>
-          </Box>
-          <IconButton
-            onClick={onClose}
-            sx={{
-              color: premiumColors.textMuted,
-              bgcolor: alpha(premiumColors.gold, 0.05),
-              width: 40,
-              height: 40,
-              '&:hover': {
-                bgcolor: alpha(premiumColors.gold, 0.15),
-                color: premiumColors.gold
-              }
-            }}
-          >
-            <Close />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3 }}>
-        <Stepper activeStep={step} orientation="vertical" sx={{ mt: 1 }}>
-          {/* Step 1: Select Order */}
-          <Step>
-            <StepLabel
-              StepIconProps={{
-                sx: {
-                  color: step > 0 ? premiumColors.gold : premiumColors.textMuted,
-                  '&.Mui-active': {
-                    color: premiumColors.gold
-                  }
-                }
-              }}
-            >
-              <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                Sélectionner une commande
-              </Typography>
-            </StepLabel>
-            <StepContent>
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Rechercher une commande..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{ color: premiumColors.gold }} />
-                      </InputAdornment>
-                    ),
-                    sx: {
-                      color: premiumColors.white,
-                      bgcolor: premiumColors.surfaceLight,
-                      borderRadius: 2,
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: alpha(premiumColors.gold, 0.3)
-                      }
-                    }
-                  }}
-                  sx={{ mb: 2 }}
-                />
-
-                <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-                  {filteredOrders.map((order) => (
-                    <Paper
-                      key={order._id}
-                      elevation={0}
-                      onClick={() => setSelectedOrder(order)}
-                      sx={{
-                        p: 2,
-                        mb: 1,
-                        bgcolor: selectedOrder?._id === order._id 
-                          ? alpha(premiumColors.gold, 0.15)
-                          : alpha(premiumColors.surfaceLight, 0.5),
-                        border: `1px solid ${selectedOrder?._id === order._id 
-                          ? alpha(premiumColors.gold, 0.5)
-                          : alpha(premiumColors.gold, 0.1)}`,
-                        borderRadius: 2,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          bgcolor: alpha(premiumColors.gold, 0.1),
-                          borderColor: alpha(premiumColors.gold, 0.3)
-                        }
-                      }}
-                    >
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={4}>
-                          <Typography sx={{ color: premiumColors.gold, fontWeight: 700 }}>
-                            {order.orderNumber}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={4}>
-                          <Typography sx={{ color: premiumColors.white }}>
-                            {order.customer?.fullName}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={4}>
-                          <Typography sx={{ color: premiumColors.gold, textAlign: 'right', fontWeight: 700 }}>
-                            {order.total?.toFixed(2)} DT
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Box>
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={!selectedOrder}
-                  sx={{
-                    bgcolor: premiumColors.gold,
-                    color: premiumColors.noir,
-                    px: 3,
-                    '&:hover': {
-                      bgcolor: premiumColors.goldDark
-                    },
-                    '&:disabled': {
-                      bgcolor: alpha(premiumColors.gold, 0.3),
-                      color: premiumColors.noir
-                    }
-                  }}
-                >
-                  Continuer
-                </Button>
-              </Box>
-            </StepContent>
-          </Step>
-
-          {/* Step 2: Invoice Details */}
-          <Step>
-            <StepLabel
-              StepIconProps={{
-                sx: {
-                  color: step > 1 ? premiumColors.gold : premiumColors.textMuted,
-                  '&.Mui-active': {
-                    color: premiumColors.gold
-                  }
-                }
-              }}
-            >
-              <Typography sx={{ color: premiumColors.white, fontWeight: 600 }}>
-                Détails de la facture
-              </Typography>
-            </StepLabel>
-            <StepContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Numéro de facture"
-                    value={invoiceData.invoiceNumber}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                    size="small"
-                    InputProps={{
-                      sx: {
-                        color: premiumColors.white,
-                        bgcolor: premiumColors.surfaceLight,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: alpha(premiumColors.gold, 0.3)
-                        }
-                      }
-                    }}
-                    InputLabelProps={{
-                      sx: { color: premiumColors.textMuted }
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Date d'échéance"
-                    type="date"
-                    value={invoiceData.dueDate}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
-                    size="small"
-                    InputProps={{
-                      sx: {
-                        color: premiumColors.white,
-                        bgcolor: premiumColors.surfaceLight,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: alpha(premiumColors.gold, 0.3)
-                        }
-                      }
-                    }}
-                    InputLabelProps={{
-                      shrink: true,
-                      sx: { color: premiumColors.textMuted }
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel sx={{ color: premiumColors.textMuted }}>
-                      Mode de paiement
-                    </InputLabel>
-                    <Select
-                      value={invoiceData.paymentMethod}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, paymentMethod: e.target.value })}
-                      sx={{
-                        color: premiumColors.white,
-                        bgcolor: premiumColors.surfaceLight,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: alpha(premiumColors.gold, 0.3)
-                        }
-                      }}
-                    >
-                      <MenuItem value="cash">Paiement à la livraison</MenuItem>
-                      <MenuItem value="card">Carte bancaire</MenuItem>
-                      <MenuItem value="bank">Virement bancaire</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Notes (optionnel)"
-                    multiline
-                    rows={3}
-                    value={invoiceData.notes}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
-                    InputProps={{
-                      sx: {
-                        color: premiumColors.white,
-                        bgcolor: premiumColors.surfaceLight,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: alpha(premiumColors.gold, 0.3)
-                        }
-                      }
-                    }}
-                    InputLabelProps={{
-                      sx: { color: premiumColors.textMuted }
-                    }}
-                  />
-                </Grid>
-              </Grid>
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={handleBack}
-                  sx={{
-                    color: premiumColors.gold,
-                    borderColor: premiumColors.gold,
-                    '&:hover': {
-                      borderColor: premiumColors.goldDark,
-                      bgcolor: alpha(premiumColors.gold, 0.05)
-                    }
-                  }}
-                >
-                  Retour
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleCreateInvoice}
-                  sx={{
-                    bgcolor: premiumColors.gold,
-                    color: premiumColors.noir,
-                    px: 3,
-                    '&:hover': {
-                      bgcolor: premiumColors.goldDark
-                    }
-                  }}
-                >
-                  Créer la facture
-                </Button>
-              </Box>
-            </StepContent>
-          </Step>
-        </Stepper>
-      </DialogContent>
-    </Dialog>
-  );
+    
+    // Footer with thank you message and company details
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.5);
+    doc.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Merci de votre confiance !', pageWidth / 2, pageHeight - 20, { align: 'center' });
+    doc.text('VOTRE MARQUE - contact@votreentreprise.com - +216 00 000 000', pageWidth / 2, pageHeight - 15, { align: 'center' });
+    
+    // Save PDF
+    doc.save(`Facture_${order?.orderNumber || 'commande'}.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+  }
 };
 
 // ============ MAIN FACTURE COMPONENT ============
 const Facture = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [filteredInvoices, setFilteredInvoices] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [invoiceToDelete, setInvoiceToDelete] = useState(null);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState([]);
+  const [paymentFilter, setPaymentFilter] = useState([]);
   const [dateFilter, setDateFilter] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -2175,216 +938,214 @@ const Facture = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [stats, setStats] = useState({
     total: 0,
-    paid: 0,
+    totalRevenue: 0,
     pending: 0,
-    cancelled: 0,
-    draft: 0,
-    revenue: 0,
+    delivered: 0,
     today: 0
   });
 
   // ============ API FUNCTIONS ============
-  const fetchInvoices = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}api/orders`, {
+      const response = await fetch(`${API_BASE}/api/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       
       if (data.success) {
-        setInvoices(data.data);
-        applyFilters(data.data);
-        calculateStats(data.data);
+        setOrders(data.data || []);
+        calculateStats(data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching invoices:', error);
-      // For demo, use mock data
-      const mockInvoices = generateMockInvoices();
-      setInvoices(mockInvoices);
-      applyFilters(mockInvoices);
-      calculateStats(mockInvoices);
+      console.error('Error fetching orders:', error);
+      showSnackbar('Erreur lors du chargement des commandes', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const generateMockInvoices = () => {
-    const mockInvoices = [];
-    for (let i = 1; i <= 25; i++) {
-      mockInvoices.push({
-        _id: `inv-${i}`,
-        invoiceNumber: `FACT-2024-${String(i).padStart(3, '0')}`,
-        orderNumber: `CMD-2024-${String(i).padStart(3, '0')}`,
-        customer: {
-          fullName: `Client ${i}`,
-          email: `client${i}@example.com`,
-          phone: `+216 99 ${String(i).padStart(2, '0')} 123`,
-          address: `Rue ${i}, Tunis`,
-          city: 'Tunis'
-        },
-        items: [
-          {
-            name: 'Produit A',
-            quantity: Math.floor(Math.random() * 3) + 1,
-            price: 129.99,
-            selectedSize: 'M',
-            selectedColor: 'Noir'
-          },
-          {
-            name: 'Produit B',
-            quantity: Math.floor(Math.random() * 2) + 1,
-            price: 79.99,
-            selectedSize: 'L',
-            selectedColor: 'Blanc'
-          }
-        ],
-        subtotal: 209.98,
-        shippingCost: 10,
-        tax: 41.99,
-        total: 261.97,
-        paymentMethod: ['cash', 'card', 'bank'][Math.floor(Math.random() * 3)],
-        status: ['paid', 'pending', 'cancelled', 'draft'][Math.floor(Math.random() * 4)],
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        notes: i % 3 === 0 ? 'Livraison express' : ''
+  const fetchOrderById = useCallback(async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/orders/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      const data = await response.json();
+      if (data.success) {
+        setSelectedOrder(data.data);
+        setDetailsOpen(true);
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      showSnackbar('Erreur lors du chargement de la commande', 'error');
     }
-    return mockInvoices;
-  };
+  }, []);
 
-  const calculateStats = (invoicesData) => {
+  const updateOrderStatus = useCallback(async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/orders/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const updatedOrders = orders.map(order => 
+          order._id === id ? { ...order, status: newStatus } : order
+        );
+        setOrders(updatedOrders);
+        calculateStats(updatedOrders);
+        
+        if (selectedOrder && selectedOrder._id === id) {
+          setSelectedOrder({ ...selectedOrder, status: newStatus });
+        }
+        
+        showSnackbar('Statut mis à jour avec succès', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      showSnackbar('Erreur lors de la mise à jour du statut', 'error');
+    }
+  }, [orders, selectedOrder]);
+
+  const deleteOrder = useCallback(async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/orders/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const updatedOrders = orders.filter(order => order._id !== id);
+        setOrders(updatedOrders);
+        calculateStats(updatedOrders);
+        
+        if (selectedOrder && selectedOrder._id === id) {
+          setDetailsOpen(false);
+          setSelectedOrder(null);
+        }
+        
+        showSnackbar('Commande supprimée avec succès', 'success');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      showSnackbar('Erreur lors de la suppression de la commande', 'error');
+    }
+  }, [orders, selectedOrder]);
+
+  // ============ UTILITY FUNCTIONS ============
+  const calculateStats = useCallback((ordersData) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     const stats = {
-      total: invoicesData.length,
-      paid: invoicesData.filter(i => i.status === 'paid').length,
-      pending: invoicesData.filter(i => i.status === 'pending').length,
-      cancelled: invoicesData.filter(i => i.status === 'cancelled').length,
-      draft: invoicesData.filter(i => i.status === 'draft').length,
-      revenue: invoicesData
-        .filter(i => i.status === 'paid')
-        .reduce((sum, i) => sum + i.total, 0),
-      today: invoicesData.filter(i => new Date(i.createdAt) >= today).length
+      total: ordersData.length,
+      totalRevenue: ordersData.reduce((sum, order) => sum + (order.total || 0), 0),
+      pending: ordersData.filter(o => o.status === 'pending').length,
+      delivered: ordersData.filter(o => o.status === 'delivered').length,
+      today: ordersData.filter(o => new Date(o.createdAt) >= today).length
     };
     
     setStats(stats);
-  };
+  }, []);
 
-  const applyFilters = (invoicesData) => {
-    let filtered = [...invoicesData];
+  const applyFilters = useCallback(() => {
+    let filtered = [...orders];
 
+    // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(invoice => 
-        invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.customer?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(order => 
+        order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer?.phone?.includes(searchTerm)
       );
     }
 
+    // Status filter
     if (statusFilter.length > 0) {
-      filtered = filtered.filter(invoice => statusFilter.includes(invoice.status));
+      filtered = filtered.filter(order => statusFilter.includes(order.status));
     }
 
+    // Payment method filter
+    if (paymentFilter.length > 0) {
+      filtered = filtered.filter(order => paymentFilter.includes(order.paymentMethod));
+    }
+
+    // Date filter
     if (dateFilter) {
       const filterDate = new Date(dateFilter).setHours(0, 0, 0, 0);
-      filtered = filtered.filter(invoice => {
-        const invoiceDate = new Date(invoice.createdAt).setHours(0, 0, 0, 0);
-        return invoiceDate === filterDate;
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.createdAt).setHours(0, 0, 0, 0);
+        return orderDate === filterDate;
       });
     }
 
+    // Sorting
     filtered.sort((a, b) => {
-      let valA = a[sortBy];
-      let valB = b[sortBy];
+      let valA, valB;
       
-      if (sortBy === 'createdAt' || sortBy === 'dueDate') {
-        valA = new Date(valA).getTime();
-        valB = new Date(valB).getTime();
-      }
-      if (sortBy === 'total') {
-        valA = parseFloat(valA);
-        valB = parseFloat(valB);
+      switch(sortBy) {
+        case 'orderNumber':
+          valA = a.orderNumber || '';
+          valB = b.orderNumber || '';
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'total':
+          valA = a.total || 0;
+          valB = b.total || 0;
+          break;
+        case 'status':
+          valA = a.status || '';
+          valB = b.status || '';
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'createdAt':
+        default:
+          valA = new Date(a.createdAt).getTime();
+          valB = new Date(b.createdAt).getTime();
       }
       
       return sortOrder === 'asc' ? valA - valB : valB - valA;
     });
 
-    setFilteredInvoices(filtered);
-  };
+    setFilteredOrders(filtered);
+  }, [orders, searchTerm, statusFilter, paymentFilter, dateFilter, sortBy, sortOrder]);
 
-  const getStatusCount = (status) => {
-    return invoices.filter(i => i.status === status).length;
-  };
+  const getStatusCount = useCallback((status) => {
+    return orders.filter(o => o.status === status).length;
+  }, [orders]);
+
+  const getPaymentCount = useCallback((method) => {
+    return orders.filter(o => o.paymentMethod === method).length;
+  }, [orders]);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleViewInvoice = (invoice) => {
-    setSelectedInvoice(invoice);
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
     setDetailsOpen(true);
   };
 
-  const handleDownloadInvoice = (invoice) => {
-    try {
-      const doc = InvoicePDFService.generateInvoice(invoice);
-      doc.save(`${invoice.invoiceNumber || 'facture'}.pdf`);
-      showSnackbar('PDF généré avec succès', 'success');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      showSnackbar('Erreur lors de la génération du PDF', 'error');
-    }
-  };
-
-  const handleDeleteClick = (invoice) => {
-    setInvoiceToDelete(invoice);
+  const handleDeleteClick = (order) => {
+    setOrderToDelete(order);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = (id) => {
-    const updatedInvoices = invoices.filter(invoice => invoice._id !== id);
-    setInvoices(updatedInvoices);
-    applyFilters(updatedInvoices);
-    calculateStats(updatedInvoices);
-    
-    if (selectedInvoice && selectedInvoice._id === id) {
-      setDetailsOpen(false);
-      setSelectedInvoice(null);
-    }
-    
-    showSnackbar('Facture supprimée avec succès', 'success');
-  };
-
-  const handleStatusUpdate = (id, newStatus) => {
-    const updatedInvoices = invoices.map(invoice => 
-      invoice._id === id ? { ...invoice, status: newStatus } : invoice
-    );
-    setInvoices(updatedInvoices);
-    applyFilters(updatedInvoices);
-    calculateStats(updatedInvoices);
-    
-    if (selectedInvoice && selectedInvoice._id === id) {
-      setSelectedInvoice({ ...selectedInvoice, status: newStatus });
-    }
-    
-    showSnackbar(`Statut mis à jour: ${invoiceStatusConfig[newStatus].label}`, 'success');
-  };
-
-  const handleCreateInvoice = (newInvoice) => {
-    const updatedInvoices = [newInvoice, ...invoices];
-    setInvoices(updatedInvoices);
-    applyFilters(updatedInvoices);
-    calculateStats(updatedInvoices);
-    setCreateModalOpen(false);
-    showSnackbar('Facture créée avec succès', 'success');
-  };
-
-  const handleStatusFilterChange = (event) => {
-    setStatusFilter(event.target.value);
+    deleteOrder(id);
+    setOrderToDelete(null);
   };
 
   const handleSort = (field) => {
@@ -2397,144 +1158,158 @@ const Facture = () => {
   };
 
   const handleRefresh = () => {
-    fetchInvoices();
+    fetchOrders();
     showSnackbar('Données actualisées', 'success');
   };
 
-  const exportToCSV = () => {
-    const headers = ['N° Facture', 'N° Commande', 'Client', 'Date', 'Total', 'Statut', 'Paiement'];
-    const data = filteredInvoices.map(invoice => [
-      invoice.invoiceNumber || invoice._id,
-      invoice.orderNumber || '-',
-      invoice.customer?.fullName || 'Client',
-      format(new Date(invoice.createdAt), 'dd/MM/yyyy'),
-      invoice.total?.toFixed(2),
-      invoiceStatusConfig[invoice.status]?.label || invoice.status,
-      invoice.paymentMethod === 'cash' ? 'Paiement livraison' : 
-      invoice.paymentMethod === 'card' ? 'Carte' : 'Virement'
-    ]);
-    
-    const csv = [headers, ...data].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `factures_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
-    a.click();
-    
-    showSnackbar('Export CSV réussi', 'success');
-  };
+  const exportToCSV = useCallback(() => {
+    try {
+      const headers = ['N° Commande', 'Client', 'Email', 'Téléphone', 'Total', 'Statut', 'Paiement', 'Date'];
+      const data = filteredOrders.map(order => [
+        order.orderNumber || 'N/A',
+        order.customer?.fullName || 'N/A',
+        order.customer?.email || 'N/A',
+        order.customer?.phone || 'N/A',
+        `${(order.total || 0).toFixed(2)} DT`,
+        statusConfig[order.status]?.label || order.status || 'N/A',
+        paymentConfig[order.paymentMethod]?.label || order.paymentMethod || 'N/A',
+        order.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'
+      ]);
+      
+      const csv = [headers, ...data].map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `commandes_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+      a.click();
+      
+      showSnackbar('Export CSV réussi', 'success');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      showSnackbar('Erreur lors de l\'export CSV', 'error');
+    }
+  }, [filteredOrders]);
 
-  useEffect(() => {
-    fetchInvoices();
+  const handleGeneratePDF = useCallback((order) => {
+    generateOrderPDF(order);
+    showSnackbar('PDF généré avec succès', 'success');
   }, []);
 
+  // Effects
   useEffect(() => {
-    applyFilters(invoices);
-  }, [searchTerm, statusFilter, dateFilter, sortBy, sortOrder]);
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters, orders, searchTerm, statusFilter, paymentFilter, dateFilter, sortBy, sortOrder]);
+
+  // Memoized values
+  const paginatedOrders = useMemo(() => {
+    return filteredOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [filteredOrders, page, rowsPerPage]);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={frLocale}>
-      {/* WHITE BACKGROUND */}
       <Box sx={{ 
-        width: '100%',
+        width: '90%',
         minHeight: '100vh',
         bgcolor: '#ffffff',
-        py: { xs: 2, lg: 5 }
+        py: { xs: 2, lg: 5 },
+        ml: 12
       }}>
-        {/* CENTERED CONTAINER */}
         <Box sx={{
           maxWidth: '1600px',
           width: '95%',
           mx: 'auto'
         }}>
-          {/* Header Section */}
+          
+          {/* Header with Logo */}
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            mb: 4
+            mb: 4,
+            p: 2,
+            bgcolor: premiumColors.noir,
+            borderRadius: 2,
+            border: `1px solid ${safeAlpha(premiumColors.gold, 0.3)}`
           }}>
-            <Box>
-              <Typography
-                variant="h3"
-                sx={{
-                  color: premiumColors.goldDark,
-                  fontFamily: "'Fjalla One', sans-serif",
-                  fontWeight: 800,
-                  fontSize: { xs: '2rem', lg: '2.5rem' },
-                  letterSpacing: '1px',
-                  mb: 1
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar 
+                sx={{ 
+                  bgcolor: premiumColors.gold,
+                  color: premiumColors.noir,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 1
                 }}
               >
-                Gestion des Factures
-              </Typography>
-              <Typography
-                sx={{
-                  color: '#666666',
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5
-                }}
-              >
-                <Receipt sx={{ fontSize: '1.1rem', color: premiumColors.goldDark }} />
-                {filteredInvoices.length} facture{filteredInvoices.length > 1 ? 's' : ''} affichée{filteredInvoices.length > 1 ? 's' : ''}
-                {filteredInvoices.length !== invoices.length && ` (sur ${invoices.length} total)`}
-              </Typography>
+                <Receipt />
+              </Avatar>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    color: premiumColors.gold,
+                    fontFamily: "'Fjalla One', sans-serif",
+                    fontWeight: 800,
+                    letterSpacing: '1px',
+                    lineHeight: 1.2
+                  }}
+                >
+                  GESTION DES COMMANDES
+                </Typography>
+                <Typography
+                  sx={{
+                    color: premiumColors.textMuted,
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5
+                  }}
+                >
+                  <Receipt sx={{ fontSize: '0.9rem', color: premiumColors.gold }} />
+                  {filteredOrders.length} commande{filteredOrders.length > 1 ? 's' : ''} affichée{filteredOrders.length > 1 ? 's' : ''}
+                  {filteredOrders.length !== orders.length && ` (sur ${orders.length} total)`}
+                </Typography>
+              </Box>
             </Box>
             
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                onClick={() => setCreateModalOpen(true)}
-                startIcon={<Add />}
-                sx={{
-                  bgcolor: premiumColors.gold,
-                  color: premiumColors.noir,
-                  px: 3,
-                  py: 1,
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  '&:hover': {
-                    bgcolor: premiumColors.goldDark,
-                    transform: 'translateY(-2px)',
-                    boxShadow: premiumColors.shadowGold
-                  },
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                Nouvelle facture
-              </Button>
               <Tooltip title="Exporter CSV" arrow>
                 <IconButton
                   onClick={exportToCSV}
                   sx={{
-                    color: premiumColors.goldDark,
-                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    color: premiumColors.gold,
+                    bgcolor: safeAlpha(premiumColors.gold, 0.1),
                     width: 48,
                     height: 48,
                     borderRadius: 2,
+                    border: `1px solid ${safeAlpha(premiumColors.gold, 0.3)}`,
                     '&:hover': {
-                      bgcolor: alpha(premiumColors.gold, 0.2)
-                    }
+                      bgcolor: safeAlpha(premiumColors.gold, 0.2),
+                      transform: 'scale(1.05)'
+                    },
+                    transition: 'all 0.2s ease'
                   }}
                 >
-                  <Download />
+                  <FileDownload />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Actualiser" arrow>
                 <IconButton
                   onClick={handleRefresh}
                   sx={{
-                    color: premiumColors.goldDark,
-                    bgcolor: alpha(premiumColors.gold, 0.1),
+                    color: premiumColors.gold,
+                    bgcolor: safeAlpha(premiumColors.gold, 0.1),
                     width: 48,
                     height: 48,
                     borderRadius: 2,
+                    border: `1px solid ${safeAlpha(premiumColors.gold, 0.3)}`,
                     '&:hover': {
-                      bgcolor: alpha(premiumColors.gold, 0.2),
+                      bgcolor: safeAlpha(premiumColors.gold, 0.2),
                       transform: 'rotate(180deg)'
                     },
                     transition: 'all 0.4s ease'
@@ -2548,49 +1323,39 @@ const Facture = () => {
 
           {/* Statistics Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                title="Total Factures"
+                title="Total Commandes"
                 value={stats.total}
                 subtitle={`+${stats.today} aujourd'hui`}
                 icon={<Receipt />}
                 color={premiumColors.gold}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                title="Payées"
-                value={stats.paid}
-                subtitle={`${((stats.paid / stats.total) * 100 || 0).toFixed(1)}%`}
-                icon={<CheckCircle />}
-                color={premiumColors.paid}
+                title="Chiffre d'affaires"
+                value={`${stats.totalRevenue.toFixed(2)} DT`}
+                icon={<AttachMoney />}
+                color={premiumColors.success}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="En attente"
                 value={stats.pending}
-                subtitle={`${((stats.pending / stats.total) * 100 || 0).toFixed(1)}%`}
+                subtitle={`${((stats.pending / stats.total) * 100 || 0).toFixed(1)}% du total`}
                 icon={<Schedule />}
                 color={premiumColors.pending}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                title="Brouillons"
-                value={stats.draft}
-                subtitle={`${((stats.draft / stats.total) * 100 || 0).toFixed(1)}%`}
-                icon={<Edit />}
-                color={premiumColors.draft}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
-              <StatCard
-                title="Chiffre d'affaires"
-                value={`${stats.revenue.toFixed(2)} DT`}
-                subtitle={`Moyenne: ${(stats.revenue / (stats.paid || 1)).toFixed(2)} DT`}
-                icon={<AttachMoney />}
-                color={premiumColors.gold}
+                title="Livrées"
+                value={stats.delivered}
+                subtitle={`${((stats.delivered / stats.total) * 100 || 0).toFixed(1)}% du total`}
+                icon={<CheckCircle />}
+                color={premiumColors.delivered}
               />
             </Grid>
           </Grid>
@@ -2601,9 +1366,9 @@ const Facture = () => {
             sx={{
               p: 3,
               mb: 4,
-              bgcolor: '#f8f8f8',
+              bgcolor: '#f4f4f4',
               border: '1px solid #e0e0e0',
-              borderRadius: 3
+              borderRadius: 10
             }}
           >
             <Grid container spacing={2} alignItems="center">
@@ -2611,7 +1376,7 @@ const Facture = () => {
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="Rechercher par n° facture, client..."
+                  placeholder="Rechercher par n° commande, client, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   size="small"
@@ -2651,47 +1416,28 @@ const Facture = () => {
                 />
               </Grid>
 
-              {/* Status Filter - Matching Order.jsx style */}
-              <Grid item xs={12} md={3}>
+              {/* Status Filter */}
+              <Grid item xs={12} md={2.5}>
                 <FormControl fullWidth size="small">
-                  <InputLabel 
-                    sx={{ 
-                      color: '#666666',
-                      bgcolor: '#ffffff',
-                      px: 1,
-                      '&.Mui-focused': { 
-                        color: premiumColors.goldDark 
-                      }
-                    }}
-                  >
-                    Statut de la facture
-                  </InputLabel>
                   <Select
                     multiple
                     value={statusFilter}
-                    onChange={handleStatusFilterChange}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     displayEmpty
                     renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return (
-                          <Typography sx={{ color: '#666666', fontSize: '0.9rem' }}>
-                            Tous les statuts
-                          </Typography>
-                        );
-                      }
+                      if (selected.length === 0) return <Typography sx={{ color: '#666666', fontSize: '0.9rem' }}>Tous les statuts</Typography>;
                       return (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           {selected.map((value) => (
                             <Chip
                               key={value}
-                              label={invoiceStatusConfig[value]?.label}
+                              label={statusConfig[value]?.label}
                               size="small"
                               sx={{
-                                bgcolor: invoiceStatusConfig[value]?.bgColor,
-                                color: invoiceStatusConfig[value]?.color,
+                                bgcolor: statusConfig[value]?.bgColor || safeAlpha(premiumColors.gold, 0.1),
+                                color: statusConfig[value]?.color || premiumColors.gold,
                                 fontSize: '0.7rem',
-                                height: 24,
-                                '& .MuiChip-label': { px: 1 }
+                                height: 24
                               }}
                             />
                           ))}
@@ -2701,70 +1447,123 @@ const Facture = () => {
                     sx={{
                       color: '#333333',
                       bgcolor: '#ffffff',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#e0e0e0'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: premiumColors.gold
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: premiumColors.gold,
-                        borderWidth: 1.5
-                      }
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e0e0' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold, borderWidth: 1.5 }
                     }}
                     MenuProps={{
                       PaperProps: {
                         sx: {
                           bgcolor: premiumColors.surface,
-                          border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+                          border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`,
                           borderRadius: 2,
                           mt: 1,
-                          maxHeight: 400,
-                          boxShadow: premiumColors.shadowLg
+                          maxHeight: 400
                         }
                       }
                     }}
                   >
-                    {Object.keys(invoiceStatusConfig).map((status) => (
+                    {Object.keys(statusConfig).map((status) => (
                       <MenuItem 
                         key={status} 
                         value={status}
                         sx={{
                           color: premiumColors.white,
-                          '&:hover': {
-                            bgcolor: invoiceStatusConfig[status]?.bgColor
-                          },
-                          '&.Mui-selected': {
-                            bgcolor: alpha(invoiceStatusConfig[status]?.color, 0.2),
-                            '&:hover': {
-                              bgcolor: alpha(invoiceStatusConfig[status]?.color, 0.3)
-                            }
-                          }
+                          '&:hover': { bgcolor: statusConfig[status]?.bgColor || safeAlpha(premiumColors.gold, 0.1) }
                         }}
                       >
                         <Checkbox 
                           checked={statusFilter.indexOf(status) > -1} 
                           size="small"
                           sx={{
-                            color: invoiceStatusConfig[status]?.color,
-                            '&.Mui-checked': {
-                              color: invoiceStatusConfig[status]?.color
-                            }
+                            color: statusConfig[status]?.color || premiumColors.gold,
+                            '&.Mui-checked': { color: statusConfig[status]?.color || premiumColors.gold }
                           }}
                         />
                         <ListItemText 
-                          primary={invoiceStatusConfig[status].label}
-                          secondary={`${getStatusCount(status)} facture${getStatusCount(status) > 1 ? 's' : ''}`}
+                          primary={statusConfig[status]?.label || status}
+                          secondary={`${getStatusCount(status)} commande${getStatusCount(status) > 1 ? 's' : ''}`}
                           sx={{
-                            '& .MuiListItemText-primary': {
-                              color: premiumColors.white,
-                              fontSize: '0.9rem',
-                              fontWeight: statusFilter.includes(status) ? 700 : 400
-                            },
-                            '& .MuiListItemText-secondary': {
-                              color: premiumColors.textMuted,
-                              fontSize: '0.75rem'
-                            }
+                            '& .MuiListItemText-primary': { color: premiumColors.white },
+                            '& .MuiListItemText-secondary': { color: premiumColors.textMuted }
+                          }}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Payment Filter */}
+              <Grid item xs={12} md={2.5}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    multiple
+                    value={paymentFilter}
+                    onChange={(e) => setPaymentFilter(e.target.value)}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (selected.length === 0) return <Typography sx={{ color: '#666666', fontSize: '0.9rem' }}>Tous les paiements</Typography>;
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => (
+                            <Chip
+                              key={value}
+                              label={paymentConfig[value]?.label}
+                              size="small"
+                              sx={{
+                                bgcolor: paymentConfig[value]?.bgColor || safeAlpha(premiumColors.gold, 0.1),
+                                color: paymentConfig[value]?.color || premiumColors.gold,
+                                fontSize: '0.7rem',
+                                height: 24
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      );
+                    }}
+                    sx={{
+                      color: '#333333',
+                      bgcolor: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e0e0' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold, borderWidth: 1.5 }
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          bgcolor: premiumColors.surface,
+                          border: `1px solid ${safeAlpha(premiumColors.gold, 0.2)}`,
+                          borderRadius: 2,
+                          mt: 1,
+                          maxHeight: 400
+                        }
+                      }
+                    }}
+                  >
+                    {Object.keys(paymentConfig).map((method) => (
+                      <MenuItem 
+                        key={method} 
+                        value={method}
+                        sx={{
+                          color: premiumColors.white,
+                          '&:hover': { bgcolor: paymentConfig[method]?.bgColor || safeAlpha(premiumColors.gold, 0.1) }
+                        }}
+                      >
+                        <Checkbox 
+                          checked={paymentFilter.indexOf(method) > -1} 
+                          size="small"
+                          sx={{
+                            color: paymentConfig[method]?.color || premiumColors.gold,
+                            '&.Mui-checked': { color: paymentConfig[method]?.color || premiumColors.gold }
+                          }}
+                        />
+                        <ListItemText 
+                          primary={paymentConfig[method]?.label || method}
+                          secondary={`${getPaymentCount(method)} commande${getPaymentCount(method) > 1 ? 's' : ''}`}
+                          sx={{
+                            '& .MuiListItemText-primary': { color: premiumColors.white },
+                            '& .MuiListItemText-secondary': { color: premiumColors.textMuted }
                           }}
                         />
                       </MenuItem>
@@ -2774,7 +1573,7 @@ const Facture = () => {
               </Grid>
 
               {/* Date Filter */}
-              <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={2}>
                 <DatePicker
                   label="Filtrer par date"
                   value={dateFilter}
@@ -2788,22 +1587,13 @@ const Facture = () => {
                           color: '#333333',
                           bgcolor: '#ffffff',
                           borderRadius: 2,
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e0e0e0'
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: premiumColors.gold
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: premiumColors.gold,
-                            borderWidth: 1.5
-                          }
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e0e0' },
+                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: premiumColors.gold, borderWidth: 1.5 }
                         },
                         '& .MuiInputLabel-root': {
                           color: '#666666',
-                          '&.Mui-focused': {
-                            color: premiumColors.goldDark
-                          }
+                          '&.Mui-focused': { color: premiumColors.goldDark }
                         }
                       }
                     }
@@ -2812,33 +1602,33 @@ const Facture = () => {
               </Grid>
 
               {/* Reset Button */}
-              <Grid item xs={12} md={2}>
+              <Grid item xs={12} md={1}>
                 <Button
                   fullWidth
                   variant="outlined"
                   onClick={() => {
                     setSearchTerm('');
                     setStatusFilter([]);
+                    setPaymentFilter([]);
                     setDateFilter(null);
                   }}
-                  startIcon={<FilterList />}
                   sx={{
                     color: premiumColors.goldDark,
                     borderColor: premiumColors.gold,
                     borderWidth: 1.5,
                     bgcolor: '#ffffff',
                     py: 1,
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     fontWeight: 600,
                     textTransform: 'none',
                     borderRadius: 2,
                     '&:hover': {
                       borderColor: premiumColors.goldDark,
-                      bgcolor: alpha(premiumColors.gold, 0.05)
+                      bgcolor: safeAlpha(premiumColors.gold, 0.05)
                     }
                   }}
                 >
-                  Réinitialiser
+                  Reset
                 </Button>
               </Grid>
             </Grid>
@@ -2867,13 +1657,24 @@ const Facture = () => {
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 textTransform: 'none',
-                '&:hover': { 
-                  color: premiumColors.goldDark,
-                  bgcolor: 'transparent'
-                }
+                '&:hover': { color: premiumColors.goldDark, bgcolor: 'transparent' }
               }}
             >
               Date
+            </Button>
+            <Button
+              size="small"
+              onClick={() => handleSort('orderNumber')}
+              endIcon={sortBy === 'orderNumber' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
+              sx={{
+                color: sortBy === 'orderNumber' ? premiumColors.goldDark : '#666666',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                '&:hover': { color: premiumColors.goldDark, bgcolor: 'transparent' }
+              }}
+            >
+              N° Commande
             </Button>
             <Button
               size="small"
@@ -2884,39 +1685,19 @@ const Facture = () => {
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 textTransform: 'none',
-                '&:hover': { 
-                  color: premiumColors.goldDark,
-                  bgcolor: 'transparent'
-                }
+                '&:hover': { color: premiumColors.goldDark, bgcolor: 'transparent' }
               }}
             >
-              Total
-            </Button>
-            <Button
-              size="small"
-              onClick={() => handleSort('status')}
-              endIcon={sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUpward /> : <ArrowDownward />)}
-              sx={{
-                color: sortBy === 'status' ? premiumColors.goldDark : '#666666',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': { 
-                  color: premiumColors.goldDark,
-                  bgcolor: 'transparent'
-                }
-              }}
-            >
-              Statut
+              Montant
             </Button>
           </Box>
 
-          {/* Invoices List */}
+          {/* Orders List */}
           {loading ? (
             <Box sx={{ width: '100%', py: 8 }}>
-              <LinearProgress 
+              <LinearProgress
                 sx={{
-                  bgcolor: alpha(premiumColors.gold, 0.1),
+                  bgcolor: safeAlpha(premiumColors.gold, 0.1),
                   height: 6,
                   borderRadius: 3,
                   '& .MuiLinearProgress-bar': {
@@ -2926,17 +1707,17 @@ const Facture = () => {
                 }}
               />
             </Box>
-          ) : filteredInvoices.length === 0 ? (
+          ) : filteredOrders.length === 0 ? (
             <Paper
               sx={{
                 p: 8,
                 textAlign: 'center',
                 bgcolor: premiumColors.surface,
-                border: `1px solid ${alpha(premiumColors.gold, 0.15)}`,
+                border: `1px solid ${safeAlpha(premiumColors.gold, 0.15)}`,
                 borderRadius: 3
               }}
             >
-              <Receipt sx={{ fontSize: 80, color: alpha(premiumColors.gold, 0.3), mb: 2 }} />
+              <Receipt sx={{ fontSize: 80, color: safeAlpha(premiumColors.gold, 0.3), mb: 2 }} />
               <Typography
                 variant="h5"
                 sx={{
@@ -2946,47 +1727,28 @@ const Facture = () => {
                   mb: 1
                 }}
               >
-                Aucune facture trouvée
+                Aucune commande trouvée
               </Typography>
               <Typography sx={{ color: premiumColors.textMuted, fontSize: '0.95rem' }}>
-                Commencez par créer une nouvelle facture
+                Essayez de modifier vos filtres
               </Typography>
-              <Button
-                variant="contained"
-                onClick={() => setCreateModalOpen(true)}
-                startIcon={<Add />}
-                sx={{
-                  mt: 3,
-                  bgcolor: premiumColors.gold,
-                  color: premiumColors.noir,
-                  px: 4,
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: premiumColors.goldDark
-                  }
-                }}
-              >
-                Créer une facture
-              </Button>
             </Paper>
           ) : (
             <Box>
-              {filteredInvoices
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((invoice) => (
-                  <InvoiceCard
-                    key={invoice._id}
-                    invoice={invoice}
-                    onView={handleViewInvoice}
-                    onDownload={handleDownloadInvoice}
-                    onStatusUpdate={handleStatusUpdate}
-                    onDelete={handleDeleteClick}
-                  />
-                ))}
+              {paginatedOrders.map((order) => (
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  onView={handleViewOrder}
+                  onStatusUpdate={updateOrderStatus}
+                  onDelete={handleDeleteClick}
+                  onGeneratePDF={handleGeneratePDF}
+                />
+              ))}
               
               <TablePagination
                 component="div"
-                count={filteredInvoices.length}
+                count={filteredOrders.length}
                 page={page}
                 onPageChange={(e, newPage) => setPage(newPage)}
                 rowsPerPage={rowsPerPage}
@@ -2998,17 +1760,11 @@ const Facture = () => {
                 sx={{
                   mt: 2,
                   color: '#666666',
-                  '& .MuiTablePagination-select': {
-                    color: '#333333'
-                  },
-                  '& .MuiTablePagination-selectIcon': {
-                    color: premiumColors.goldDark
-                  },
+                  '& .MuiTablePagination-select': { color: '#333333' },
+                  '& .MuiTablePagination-selectIcon': { color: premiumColors.goldDark },
                   '& .MuiTablePagination-actions button': {
                     color: premiumColors.goldDark,
-                    '&:disabled': {
-                      color: alpha(premiumColors.gold, 0.3)
-                    }
+                    '&:disabled': { color: safeAlpha(premiumColors.gold, 0.3) }
                   }
                 }}
               />
@@ -3016,32 +1772,24 @@ const Facture = () => {
           )}
         </Box>
 
-        {/* Invoice Details Modal */}
-        <InvoiceDetailsModal
+        {/* Modals */}
+        <OrderDetailsModal
           open={detailsOpen}
           onClose={() => setDetailsOpen(false)}
-          invoice={selectedInvoice}
-          onDownload={handleDownloadInvoice}
-          onStatusUpdate={handleStatusUpdate}
+          order={selectedOrder}
+          onStatusUpdate={updateOrderStatus}
           onDelete={handleDeleteClick}
+          onGeneratePDF={handleGeneratePDF}
         />
 
-        {/* Create Invoice Modal */}
-        <CreateInvoiceModal
-          open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
-          onCreate={handleCreateInvoice}
-        />
-
-        {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           open={deleteDialogOpen}
           onClose={() => {
             setDeleteDialogOpen(false);
-            setInvoiceToDelete(null);
+            setOrderToDelete(null);
           }}
           onConfirm={handleDeleteConfirm}
-          invoice={invoiceToDelete}
+          order={orderToDelete}
         />
 
         {/* Snackbar */}
@@ -3058,12 +1806,12 @@ const Facture = () => {
               bgcolor: premiumColors.surface,
               color: premiumColors.white,
               border: `1px solid ${
-                snackbar.severity === 'success' ? alpha(premiumColors.success, 0.5) : 
-                snackbar.severity === 'error' ? alpha(premiumColors.error, 0.5) : 
-                alpha(premiumColors.gold, 0.5)
+                snackbar.severity === 'success' ? safeAlpha(premiumColors.success, 0.5) : 
+                snackbar.severity === 'error' ? safeAlpha(premiumColors.error, 0.5) : 
+                safeAlpha(premiumColors.gold, 0.5)
               }`,
               borderRadius: 2,
-              boxShadow: premiumColors.shadowLg
+              boxShadow: premiumColors.shadowGold
             }}
           >
             {snackbar.message}
