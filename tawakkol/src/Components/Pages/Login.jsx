@@ -281,7 +281,7 @@ const Login = ({ onClose, onSwitchToSignup }) => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}api/admin/login`, {
+      const response = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
