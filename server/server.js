@@ -23,8 +23,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'https://tawakkol-shop.vercel.app',
-  'https://tawakkol.tn',
-  'https://www.tawakkol.tn'
+  
 
 ].filter(Boolean); // Remove undefined values
 
