@@ -234,7 +234,7 @@ const Home = () => {
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
-                      Découvrir la Collection
+                      Découvrir la Collection Tawakkol
                     </Button>
 
                     <Button
@@ -269,9 +269,9 @@ const Home = () => {
                   {/* Statistiques */}
                   <Stack direction="row" spacing={4} sx={{ opacity: 0.9, ml: 2 }}>
                     {[
-                      { nombre: "10K+", label: "Clients Satisfaits" },
-                      { nombre: "500+", label: "Marques Premium" },
-                      { nombre: "50+", label: "Pays Desservis" }
+                      { nombre: "1K+", label: "Clients Satisfaits" },
+                      { nombre: "50+", label: "Marques Premium" },
+                      { nombre: "1+", label: "Pays Desservis" }
                     ].map((stat, index) => (
                       <Box key={index}>
                         <Typography sx={{ 
@@ -379,7 +379,7 @@ const Home = () => {
                 textShadow: `0 5px 15px ${premiumColors.gold}20`
               }}
             >
-              Collections Exclusives
+              Collections Tawakkol
             </Typography>
           </motion.div>
 
