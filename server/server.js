@@ -23,7 +23,10 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'https://tawakkol-shop.vercel.app',
-  
+  'https://tawakkol.tn',           // Add your domain
+  'https://www.tawakkol.tn',        // Add www subdomain
+  'http://tawakkol.tn',             // Add non-https version
+  'http://www.tawakkol.tn'           // Add non-https www
 
 ].filter(Boolean); // Remove undefined values
 
