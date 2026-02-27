@@ -25,6 +25,7 @@ import {
   Badge,
   Alert,
   Snackbar,
+  Skeleton, // Add this import
 } from '@mui/material';
 import {
   Close,
@@ -58,6 +59,174 @@ const palette = {
   success: '#059669',
   error: '#dc2626',
 };
+
+// Skeleton Card Component - Updated with exact styles and xs responsiveness
+const ProductCardSkeleton = () => (
+  <Card
+    elevation={0}
+    sx={{
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      bgcolor: 'white',
+      borderRadius: 3,
+      overflow: 'hidden',
+      border: '1px solid',
+      borderColor: 'rgba(0,0,0,0.08)',
+      transition: 'all 0.3s ease',
+    }}
+  >
+    {/* Image Container - Exact same as real product */}
+    <Box sx={{ 
+      position: 'relative', 
+      overflow: 'hidden',
+      pt: '100%', // 1:1 aspect ratio
+      bgcolor: palette.lightGray
+    }}>
+      {/* Main Image Skeleton */}
+      <Skeleton 
+        variant="rectangular" 
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          bgcolor: 'rgba(0,0,0,0.04)',
+          transform: 'none', // Remove default skeleton animation transform
+        }}
+      />
+      
+      {/* Badge Skeletons - Exact same positioning as real badges */}
+      <Box sx={{ 
+        position: 'absolute', 
+        top: 12, 
+        left: 12, 
+        display: 'flex', 
+        gap: 1,
+        flexWrap: 'wrap',
+        zIndex: 1
+      }}>
+        <Skeleton 
+          variant="rounded" 
+          width={70} 
+          height={24} 
+          sx={{ 
+            bgcolor: 'rgba(0,0,0,0.08)',
+            borderRadius: '16px', // Match Chip border radius
+          }} 
+        />
+        <Skeleton 
+          variant="rounded" 
+          width={60} 
+          height={24} 
+          sx={{ 
+            bgcolor: 'rgba(0,0,0,0.08)',
+            borderRadius: '16px',
+          }} 
+        />
+      </Box>
+    </Box>
+
+    {/* Content - Exact same padding as real card */}
+    <CardContent sx={{ p: { xs: 2, sm: 2.5 }, flexGrow: 1 }}>
+      {/* Title Skeleton - Exact same typography styles */}
+      <Skeleton 
+        variant="text" 
+        width="80%" 
+        height={28} 
+        sx={{ 
+          mb: 1,
+          bgcolor: 'rgba(0,0,0,0.08)',
+          fontSize: '1rem',
+          borderRadius: 1
+        }} 
+      />
+
+      {/* Description Skeleton - Two lines with exact same spacing */}
+      <Skeleton 
+        variant="text" 
+        width="100%" 
+        height={20} 
+        sx={{ 
+          bgcolor: 'rgba(0,0,0,0.06)',
+          fontSize: '0.85rem',
+          borderRadius: 1
+        }} 
+      />
+      <Skeleton 
+        variant="text" 
+        width="70%" 
+        height={20} 
+        sx={{ 
+          mb: 2,
+          bgcolor: 'rgba(0,0,0,0.06)',
+          fontSize: '0.85rem',
+          borderRadius: 1
+        }} 
+      />
+
+      {/* Price & Rating Row - Exact same flex layout */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mt: 'auto'
+      }}>
+        <Box sx={{ width: '40%' }}>
+          {/* Price Skeleton */}
+          <Skeleton 
+            variant="text" 
+            width="100%" 
+            height={32} 
+            sx={{ 
+              bgcolor: 'rgba(0,0,0,0.08)',
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              borderRadius: 1
+            }} 
+          />
+          {/* Variants text skeleton - matches "Available in X sizes • Y colors" */}
+          <Skeleton 
+            variant="text" 
+            width="80%" 
+            height={16} 
+            sx={{ 
+              mt: 0.5,
+              bgcolor: 'rgba(0,0,0,0.06)',
+              fontSize: '0.75rem',
+              borderRadius: 1
+            }} 
+          />
+        </Box>
+        
+        {/* Rating Skeleton - Exact same as rating chip */}
+        <Skeleton 
+          variant="rounded" 
+          width={60} 
+          height={32} 
+          sx={{ 
+            bgcolor: 'rgba(0,0,0,0.08)',
+            borderRadius: 2,
+          }} 
+        />
+      </Box>
+    </CardContent>
+
+    {/* Quick Add Button Skeleton - Exact same as real button */}
+    <Box sx={{ p: { xs: 2, sm: 2 }, pt: 0 }}>
+      <Skeleton 
+        variant="rounded" 
+        width="90vw" 
+        height={36} 
+        sx={{ 
+          bgcolor: 'rgba(0,0,0,0.08)',
+          borderRadius: 2,
+        }} 
+      />
+    </Box>
+  </Card>
+);
 
 const ProductsCatalog = () => {
   const { addToCart } = useCart();
@@ -138,7 +307,6 @@ const ProductsCatalog = () => {
   const handleProductClick = (product) => {
     setSelectedProduct(product);
     setSelectedImage(0);
-    // Set default size and color
     setSelectedSize(product.sizes?.[0] || '');
     setSelectedColor(product.colors?.[0] || null);
     setQuantity(1);
@@ -147,7 +315,6 @@ const ProductsCatalog = () => {
   const handleAddToCart = () => {
     if (!selectedProduct) return;
     
-    // Validate required selections
     if (selectedProduct.sizes?.length > 0 && !selectedSize) {
       showSnackbar('Please select a size', 'warning');
       return;
@@ -166,7 +333,6 @@ const ProductsCatalog = () => {
       quantity: quantity,
       selectedSize: selectedSize || null,
       selectedColor: selectedColor?.name || null,
-      // Include other necessary product data
       description: selectedProduct.description,
       category: selectedProduct.category,
       stock: selectedProduct.stock,
@@ -182,7 +348,6 @@ const ProductsCatalog = () => {
   };
 
   const handleQuickAdd = (product) => {
-    // For quick add, use first available size/color or defaults
     const defaultSize = product.sizes?.[0] || null;
     const defaultColor = product.colors?.[0]?.name || null;
     
@@ -214,18 +379,302 @@ const ProductsCatalog = () => {
     return images.length > 0 ? images : ['/placeholder-product.jpg'];
   };
 
-  // Loading State
-  if (loading) {
+  // Render skeleton cards while loading
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <Grid 
+          container 
+          spacing={{ xs: 2, md: 3 }} 
+          columns={{ xs: 4, sm: 8, md: 12 }}
+          sx={{ mb: 6 }}
+        >
+          {[...Array(8)].map((_, index) => (
+            <Grid 
+              key={`skeleton-${index}`} 
+              size={{ xs: 2, sm: 4, md: 4 }}
+              sx={{ display: 'flex' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                style={{ width: '100%' }}
+              >
+                <ProductCardSkeleton />
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      );
+    }
+
+    if (filteredProducts.length === 0) {
+      return (
+        <Box sx={{ 
+          width: '100%',
+          textAlign: 'center', 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Search sx={{ fontSize: 64, color: palette.gold, mb: 3, opacity: 0.3 }} />
+          <Typography variant="h6" sx={{ color: palette.slate, mb: 1, fontWeight: 600 }}>
+            No matches found
+          </Typography>
+          <Typography variant="body2" sx={{ color: palette.slate, opacity: 0.7 }}>
+            Try different filters or search terms
+          </Typography>
+        </Box>
+      );
+    }
+
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress 
-          size={50} 
-          thickness={4} 
-          sx={{ color: palette.gold }} 
-        />
-      </Box>
+      <Grid 
+        container 
+        spacing={{ xs: 2, md: 3 }} 
+        columns={{ xs: 4, sm: 8, md: 12 }}
+        sx={{ mb: 6 }}
+      >
+        {filteredProducts.map((product, index) => (
+          <Grid 
+            key={product._id || index} 
+            size={{ xs: 2, sm: 4, md: 4 }}
+            sx={{ display: 'flex' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              style={{ width: '100%' }}
+            >
+              <Card
+                elevation={0}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  bgcolor: 'white',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'rgba(0,0,0,0.08)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-6px)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    borderColor: palette.gold,
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleProductClick(product)}
+              >
+                {/* Image Container */}
+                <Box sx={{ 
+                  position: 'relative', 
+                  overflow: 'hidden',
+                  pt: '100%',
+                  bgcolor: palette.lightGray
+                }}>
+                  <CardMedia
+                    component="img"
+                    image={product.mainImage?.url || '/placeholder.jpg'}
+                    alt={product.name}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      p: 2,
+                      transition: 'transform 0.6s ease',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                  />
+                  
+                  {/* Quick View Overlay */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      bgcolor: 'rgba(0,0,0,0.7)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      '&:hover': {
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <ZoomIn sx={{ color: palette.goldLight, fontSize: 48 }} />
+                  </Box>
+
+                  {/* Product Badges */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    top: 12, 
+                    left: 12, 
+                    display: 'flex', 
+                    gap: 1,
+                    flexWrap: 'wrap' 
+                  }}>
+                    {product.category && (
+                      <Chip
+                        label={product.category}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(0,0,0,0.8)',
+                          color: palette.goldLight,
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                      />
+                    )}
+                    {product.colors?.length > 0 && (
+                      <Chip
+                        label={`${product.colors.length} colors`}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(0,0,0,0.6)',
+                          color: 'white',
+                          fontSize: '0.65rem',
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+
+                {/* Content */}
+                <CardContent sx={{ p: 2.5, flexGrow: 1 }}>
+                  {/* Title */}
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: 700,
+                      color: palette.noir,
+                      mb: 1,
+                      fontSize: '1rem',
+                      lineHeight: 1.4,
+                      minHeight: 40,
+                    }}
+                  >
+                    {product.name}
+                  </Typography>
+
+                  {/* Description */}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: palette.slate,
+                      opacity: 0.8,
+                      mb: 2,
+                      fontSize: '0.85rem',
+                      lineHeight: 1.5,
+                      minHeight: 40,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {product.description}
+                  </Typography>
+
+                  {/* Price & Rating Row */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mt: 'auto'
+                  }}>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: palette.noir,
+                          fontWeight: 800,
+                          fontSize: '1.25rem',
+                        }}
+                      >
+                        {product.price.toFixed(2)} TND
+                      </Typography>
+                      {(product.sizes?.length > 0 || product.colors?.length > 0) && (
+                        <Typography variant="caption" sx={{ 
+                          color: palette.slate, 
+                          opacity: 0.7,
+                          display: 'block',
+                          mt: 0.5
+                        }}>
+                          Available in {product.sizes?.length || 0} sizes • {product.colors?.length || 0} colors
+                        </Typography>
+                      )}
+                    </Box>
+                    
+                    {/* Rating */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      bgcolor: palette.lightGray,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 2
+                    }}>
+                      <Star sx={{ fontSize: 16, color: palette.gold, mr: 0.5 }} />
+                      <Typography variant="body2" sx={{ 
+                        color: palette.slate, 
+                        fontSize: '0.875rem',
+                        fontWeight: 600
+                      }}>
+                        {product.rating?.toFixed(1) || '4.8'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+
+                {/* Quick Add to Cart Button */}
+                <Box sx={{ p: 2, pt: 0 }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="small"
+                    startIcon={<AddShoppingCart />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickAdd(product);
+                    }}
+                    sx={{
+                      bgcolor: palette.noir,
+                      color: 'white',
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      py: 1,
+                      '&:hover': {
+                        bgcolor: palette.gold,
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    Quick Add
+                  </Button>
+                </Box>
+              </Card>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
     );
-  }
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: palette.cream, py: 4 }}>
@@ -246,278 +695,15 @@ const ProductsCatalog = () => {
       </Snackbar>
 
       {/* Products Grid */}
-      <Container maxWidth="xl" sx={{ mt: 6  }}>
+      <Container maxWidth="xl" sx={{ mt: 6 }}>
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            style={{ width: '100%' }} // Ensure full width
+            style={{ width: '100%' }}
           >
-            {filteredProducts.length === 0 ? (
-              <Box sx={{ 
-                width: '100%', // Full width
-                textAlign: 'center', 
-                py: 10,
-                px: 2, // Add some horizontal padding
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Search sx={{ fontSize: 64, color: palette.gold, mb: 3, opacity: 0.3 }} />
-                <Typography variant="h6" sx={{ color: palette.slate, mb: 1, fontWeight: 600 }}>
-                  No matches found
-                </Typography>
-                <Typography variant="body2" sx={{ color: palette.slate, opacity: 0.7 }}>
-                  Try different filters or search terms
-                </Typography>
-              </Box>
-            ) : (
-              <Grid 
-                container 
-                spacing={{ xs: 2, md: 3 }} 
-                columns={{ xs: 4, sm: 8, md: 12 }}
-                sx={{ mb: 6 }}
-              >
-                {filteredProducts.map((product, index) => (
-                  <Grid 
-                    key={product._id || index} 
-                    size={{ xs: 2, sm: 4, md: 4 }}
-                    sx={{ display: 'flex' }}
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      style={{ width: '100%' }}
-                    >
-                      <Card
-                        elevation={0}
-                        sx={{
-                          width: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          bgcolor: 'white',
-                          borderRadius: 3,
-                          overflow: 'hidden',
-                          border: '1px solid',
-                          borderColor: 'rgba(0,0,0,0.08)',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            transform: 'translateY(-6px)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                            borderColor: palette.gold,
-                          },
-                          cursor: 'pointer',
-                        }}
-                        onClick={() => handleProductClick(product)}
-                      >
-                        {/* Image Container */}
-                        <Box sx={{ 
-                          position: 'relative', 
-                          overflow: 'hidden',
-                          pt: '100%',
-                          bgcolor: palette.lightGray
-                        }}>
-                          <CardMedia
-                            component="img"
-                            image={product.mainImage?.url || '/placeholder.jpg'}
-                            alt={product.name}
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain',
-                              p: 2,
-                              transition: 'transform 0.6s ease',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                              },
-                            }}
-                          />
-                          
-                          {/* Quick View Overlay */}
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              bgcolor: 'rgba(0,0,0,0.7)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              opacity: 0,
-                              transition: 'opacity 0.3s ease',
-                              '&:hover': {
-                                opacity: 1,
-                              },
-                            }}
-                          >
-                            <ZoomIn sx={{ color: palette.goldLight, fontSize: 48 }} />
-                          </Box>
-
-                          {/* Product Badges */}
-                          <Box sx={{ 
-                            position: 'absolute', 
-                            top: 12, 
-                            left: 12, 
-                            display: 'flex', 
-                            gap: 1,
-                            flexWrap: 'wrap' 
-                          }}>
-                            {product.category && (
-                              <Chip
-                                label={product.category}
-                                size="small"
-                                sx={{
-                                  bgcolor: 'rgba(0,0,0,0.8)',
-                                  color: palette.goldLight,
-                                  fontWeight: 600,
-                                  fontSize: '0.7rem',
-                                  backdropFilter: 'blur(4px)',
-                                }}
-                              />
-                            )}
-                            {product.colors?.length > 0 && (
-                              <Chip
-                                label={`${product.colors.length} colors`}
-                                size="small"
-                                sx={{
-                                  bgcolor: 'rgba(0,0,0,0.6)',
-                                  color: 'white',
-                                  fontSize: '0.65rem',
-                                }}
-                              />
-                            )}
-                          </Box>
-                        </Box>
-
-                        {/* Content */}
-                        <CardContent sx={{ p: 2.5, flexGrow: 1 }}>
-                          {/* Title */}
-                          <Typography
-                            variant="subtitle1"
-                            sx={{
-                              fontWeight: 700,
-                              color: palette.noir,
-                              mb: 1,
-                              fontSize: '1rem',
-                              lineHeight: 1.4,
-                              minHeight: 40,
-                            }}
-                          >
-                            {product.name}
-                          </Typography>
-
-                          {/* Description */}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: palette.slate,
-                              opacity: 0.8,
-                              mb: 2,
-                              fontSize: '0.85rem',
-                              lineHeight: 1.5,
-                              minHeight: 40,
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {product.description}
-                          </Typography>
-
-                          {/* Price & Rating Row */}
-                          <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            mt: 'auto'
-                          }}>
-                            <Box>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  color: palette.noir,
-                                  fontWeight: 800,
-                                  fontSize: '1.25rem',
-                                }}
-                              >
-                                {product.price.toFixed(2)} TND
-                              </Typography>
-                              {/* Show available variants */}
-                              {(product.sizes?.length > 0 || product.colors?.length > 0) && (
-                                <Typography variant="caption" sx={{ 
-                                  color: palette.slate, 
-                                  opacity: 0.7,
-                                  display: 'block',
-                                  mt: 0.5
-                                }}>
-                                  Available in {product.sizes?.length || 0} sizes • {product.colors?.length || 0} colors
-                                </Typography>
-                              )}
-                            </Box>
-                            
-                            {/* Rating */}
-                            <Box sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center',
-                              bgcolor: palette.lightGray,
-                              px: 1.5,
-                              py: 0.5,
-                              borderRadius: 2
-                            }}>
-                              <Star sx={{ fontSize: 16, color: palette.gold, mr: 0.5 }} />
-                              <Typography variant="body2" sx={{ 
-                                color: palette.slate, 
-                                fontSize: '0.875rem',
-                                fontWeight: 600
-                              }}>
-                                {product.rating?.toFixed(1) || '4.8'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </CardContent>
-
-                        {/* Quick Add to Cart Button */}
-                        <Box sx={{ p: 2, pt: 0 }}>
-                          <Button
-                            variant="contained"
-                            fullWidth
-                            size="small"
-                            startIcon={<AddShoppingCart />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleQuickAdd(product);
-                            }}
-                            sx={{
-                              bgcolor: palette.noir,
-                              color: 'white',
-                              fontWeight: 600,
-                              borderRadius: 2,
-                              py: 1,
-                              '&:hover': {
-                                bgcolor: palette.gold,
-                                transform: 'translateY(-1px)',
-                              },
-                              transition: 'all 0.2s ease',
-                            }}
-                          >
-                            Quick Add
-                          </Button>
-                        </Box>
-                      </Card>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
+            {renderContent()}
           </motion.div>
         </AnimatePresence>
       </Container>
@@ -770,7 +956,6 @@ const ProductsCatalog = () => {
                               )}
                             </Box>
                           ))}
-                          {/* Show selected color name */}
                           {selectedColor && (
                             <Typography variant="body2" sx={{ 
                               color: palette.slate, 

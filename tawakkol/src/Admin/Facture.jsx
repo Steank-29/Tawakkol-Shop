@@ -767,13 +767,13 @@ const generateOrderPDF = (order) => {
     // Company name with gold color
     doc.setTextColor(212, 175, 55);
     doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Playfair Display', 'serif');
     doc.text('TAWAKKOL', 20, 25);
     
     // Invoice title
     doc.setFontSize(16);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Bon de commande', pageWidth - 20, 25, { align: 'right' });
+    doc.setFont('Playfair Display', 'serif');
+    doc.text('bon de livraison', pageWidth - 20, 25, { align: 'right' });
     
     // Decorative line
     doc.setDrawColor(212, 175, 55);
@@ -782,47 +782,55 @@ const generateOrderPDF = (order) => {
     
     // Order information box
     doc.setFillColor(245, 245, 245);
-    doc.roundedRect(20, 50, pageWidth - 40, 30, 3, 3, 'F');
+    doc.roundedRect(20, 50, pageWidth - 40, 40, 3, 3, 'F');
     
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Playfair Display', 'bold');
     doc.text(`COMMANDE N°: ${order?.orderNumber || 'N/A'}`, 25, 62);
     
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Playfair Display', 'bold');
     doc.text(`Date: ${order?.createdAt ? format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm') : 'N/A'}`, 25, 72);
-    doc.text(`Statut: ${order?.status ? (statusConfig[order.status]?.label || order.status) : 'N/A'}`, pageWidth - 80, 72);
+    doc.text(`Nous vous remercions de votre confiance et de votre choix envers Tawakkol`, 25, 82);
     
     // Customer Information Section
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Playfair Display', 'bold');
     doc.setTextColor(212, 175, 55);
-    doc.text('INFORMATIONS CLIENT', 20, 95);
+    doc.setFontSize(15);
+    doc.text('INFORMATIONS CLIENT', 20, 100);
     
+    // Customer Information Section with labels slightly bold
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    
+
     const customer = order?.customer || {};
     const customerInfo = [
-      `Nom: ${customer.fullName || 'N/A'}`,
-      `Email: ${customer.email || 'N/A'}`,
-      `Téléphone: ${customer.phone || 'N/A'}`,
-      `Adresse: ${customer.address || 'N/A'}, ${customer.city || 'N/A'} ${customer.postalCode || ''}`,
-      `Pays: ${customer.country || 'Tunisie'}`
+      { label: "Nom:", value: customer.fullName || "N/A" },
+      { label: "Email:", value: customer.email || "N/A" },
+      { label: "Téléphone:", value: customer.phone || "N/A" },
+      { label: "Adresse:", value: `${customer.address || "N/A"}, ${customer.city || "N/A"} ${customer.postalCode || ""}` },
+      { label: "Pays:", value: customer.country || "Tunisie" }
     ];
-    
+
     if (customer.clothingSize) {
-      customerInfo.push(`Taille: ${customer.clothingSize}`);
+      customerInfo.push({ label: "Taille:", value: customer.clothingSize });
     }
-    
-    let yPos = 105;
-    customerInfo.forEach(line => {
-      doc.text(line, 20, yPos);
+
+    let yPos = 110;
+    customerInfo.forEach(item => {
+      // Draw label in bold
+      doc.setFont('Playfair Display', 'bold');
+      doc.text(item.label, 20, yPos);
+
+      // Measure label width to position value correctly
+      const labelWidth = doc.getTextWidth(item.label + " "); // + space
+      doc.setFont('Playfair Display', 'normal');
+      doc.text(item.value, 20 + labelWidth, yPos);
+
       yPos += 7;
     });
-    
     // Order Items Table
     const tableColumn = ['Produit', 'Taille', 'Couleur', 'Prix unit.', 'Qté', 'Total'];
     const tableRows = (order?.items || []).map(item => [
@@ -861,18 +869,21 @@ const generateOrderPDF = (order) => {
     doc.roundedRect(pageWidth - 100, finalY, 80, (order?.tax || 0) > 0 ? 45 : 35, 3, 3, 'F');
     
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Playfair Display', 'normal');
     doc.setTextColor(80, 80, 80);
     
     const totalsX = pageWidth - 95;
+    doc.setFont('Playfair Display', 'bold');
     doc.text('Sous-total:', totalsX, finalY + 7);
     doc.text(`${(order?.subtotal || 0).toFixed(2)} DT`, pageWidth - 25, finalY + 7, { align: 'right' });
     
+    doc.setFont('Playfair Display', 'bold');
     doc.text('Livraison:', totalsX, finalY + 14);
     doc.text(`${(order?.shippingCost || 7).toFixed(2)} DT`, pageWidth - 25, finalY + 14, { align: 'right' });
     
     let totalY = finalY + 14;
     if (order?.tax > 0) {
+      doc.setFont('Playfair Display', 'bold');
       doc.text('TVA:', totalsX, finalY + 21);
       doc.text(`${(order.tax || 0).toFixed(2)} DT`, pageWidth - 25, finalY + 21, { align: 'right' });
       totalY = finalY + 28;
@@ -882,24 +893,50 @@ const generateOrderPDF = (order) => {
     
     // Total with gold color
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Playfair Display', 'bold');
     doc.setTextColor(212, 175, 55);
     doc.text('TOTAL:', totalsX, totalY);
     doc.text(`${(order?.total || 0).toFixed(2)} DT`, pageWidth - 25, totalY, { align: 'right' });
     
-    // Payment Method
+    // Payment Method with only method bold
     doc.setTextColor(80, 80, 80);
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Mode de paiement: ${order?.paymentMethod ? (paymentConfig[order.paymentMethod]?.label || order.paymentMethod) : 'N/A'}`, 20, totalY + 15);
+    doc.setFont('Playfair Display', 'normal');
+
+    const paymentText = "Mode de paiement: ";
+    const paymentMethod = order?.paymentMethod
+      ? (paymentConfig[order.paymentMethod]?.label || order.paymentMethod)
+      : "N/A";
+
+    // Draw normal text first
+    doc.text(paymentText, 20, totalY + 15);
+
+    // Measure width of normal text to position payment method correctly
+    const paymentTextWidth = doc.getTextWidth(paymentText);
+
+    // Draw the payment method in bold
+    doc.setFont('Playfair Display', 'bold');
+    doc.text(paymentMethod, 20 + paymentTextWidth, totalY + 15);
+
+
+    // Code Promo Method
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(10);
+    doc.setFont('Playfair Display', 'normal');
+
+    const promoText = "Pour vous remercier, profitez de -10% sur votre prochaine commande avec le code : ";
+    const promoCode = "T1W0KK%L";
+
+    // Draw the normal text first
+    doc.text(promoText, 20, totalY + 22);
+
+    // Measure width of normal text to position promo code correctly
+    const textWidth = doc.getTextWidth(promoText);
+
+    // Draw the promo code in bold
+    doc.setFont('Playfair Display', 'bold');
+    doc.text(promoCode, 20 + textWidth, totalY + 22);
     
-    // Notes if any
-    if (order?.customer?.notes) {
-      doc.setFontSize(9);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Notes:', 20, totalY + 25);
-      doc.text(order.customer.notes, 20, totalY + 32);
-    }
     
     // Footer with thank you message and company details
     doc.setDrawColor(212, 175, 55);
@@ -909,7 +946,7 @@ const generateOrderPDF = (order) => {
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
     doc.text('Merci de votre confiance !', pageWidth / 2, pageHeight - 20, { align: 'center' });
-    doc.text('VOTRE MARQUE - contact@votreentreprise.com - +216 00 000 000', pageWidth / 2, pageHeight - 15, { align: 'center' });
+    doc.text('info@tawakkol.tn - +216 23 265 016', pageWidth / 2, pageHeight - 15, { align: 'center' });
     
     // Save PDF
     doc.save(`Facture_${order?.orderNumber || 'commande'}.pdf`);
