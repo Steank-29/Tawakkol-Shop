@@ -24,7 +24,6 @@ import {
   Menu as MenuIcon,
   ShoppingBagOutlined,
   Facebook,
-  Twitter,
   Instagram,
   Close,
   ExpandMore,
@@ -37,7 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import tawakkol from '../../assets/tawakkol.png';
-
+import { BiLogoTiktok } from 'react-icons/bi';
 // Cart integration
 import { useCart } from '../../context/CartContext'; // Adjust path if your folder structure is different
 import CartDrawer from './CartDrawer'; // Adjust path according to where CartDrawer.jsx is located
@@ -189,57 +188,107 @@ const SecondaryNavbar = ({ open, onClose, categories }) => {
                       )}
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {category.items.map((item) => (
-                        <Button
-                          key={item.name}
-                          onClick={() => !category.disabled && handleCategoryClick(item.path)}
-                          disabled={category.disabled}
-                          startIcon={<ChevronRight sx={{ fontSize: 16 }} />}
-                          sx={{
-                            justifyContent: 'flex-start',
-                            color: category.disabled
-                              ? alpha(premiumColors.white, 0.4)
-                              : premiumColors.white,
-                            textTransform: 'none',
-                            fontSize: '0.9rem',
-                            fontWeight: item.featured ? 600 : 400,
-                            px: 1.5,
-                            py: 1,
-                            borderRadius: 1,
-                            background: 'transparent',
-                            border: '1px solid transparent',
-                            transition: 'all 0.3s ease',
-                            '&:hover': category.disabled ? {} : {
-                              background: alpha(premiumColors.gold, 0.1),
-                              color: premiumColors.goldLight,
-                              border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
-                              transform: 'translateX(8px)',
-                            },
-                            '&.Mui-disabled': {
-                              color: alpha(premiumColors.white, 0.4),
-                            }
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                            <Typography sx={{ flex: 1, textAlign: 'left' }}>
-                              {item.name}
-                            </Typography>
-                            {item.featured && (
-                              <Box
-                                sx={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: '50%',
-                                  background: premiumColors.gold,
-                                  ml: 1
-                                }}
-                              />
-                            )}
-                          </Box>
-                        </Button>
-                      ))}
-                    </Box>
+<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+  {category.items.map((item) => {
+    // Determine if this specific item should be disabled
+    // Item is disabled if category is disabled OR if the item itself is disabled
+    const isItemDisabled = category.disabled || item.disabled;
+    
+    return (
+      <Box
+        key={item.name}
+        sx={{
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        <Button
+          onClick={() => !isItemDisabled && handleCategoryClick(item.path)}
+          disabled={isItemDisabled}
+          startIcon={<ChevronRight sx={{ fontSize: 16 }} />}
+          sx={{
+            justifyContent: 'flex-start',
+            color: isItemDisabled
+              ? alpha(premiumColors.white, 0.4)
+              : premiumColors.white,
+            textTransform: 'none',
+            fontSize: '0.9rem',
+            fontWeight: item.featured ? 600 : 400,
+            px: 1.5,
+            py: 1,
+            borderRadius: 1,
+            background: 'transparent',
+            border: '1px solid transparent',
+            transition: 'all 0.3s ease',
+            width: '100%',
+            '&:hover': isItemDisabled ? {} : {
+              background: alpha(premiumColors.gold, 0.1),
+              color: premiumColors.goldLight,
+              border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+              transform: 'translateX(8px)',
+            },
+            '&.Mui-disabled': {
+              color: alpha(premiumColors.white, 0.4),
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+            <Typography sx={{ flex: 1, textAlign: 'left' }}>
+              {item.name}
+            </Typography>
+            {item.featured && !isItemDisabled && (
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: premiumColors.gold,
+                  ml: 1
+                }}
+              />
+            )}
+          </Box>
+        </Button>
+
+        {/* Blurry overlay shape only for disabled items */}
+        {isItemDisabled && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: alpha(premiumColors.gold, 0.05),
+              backdropFilter: 'blur(4px)',
+              borderRadius: 1,
+              border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+              boxShadow: `0 0 20px ${alpha(premiumColors.gold, 0.1)} inset`,
+              pointerEvents: 'none',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&::after': {
+                content: '"Coming Soon"',
+                position: 'absolute',
+                color: premiumColors.goldLight,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                background: alpha(premiumColors.gold, 0.3),
+                padding: '2px 8px',
+                borderRadius: '12px',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                border: `1px solid ${alpha(premiumColors.gold, 0.4)}`,
+              }
+            }}
+          />
+        )}
+      </Box>
+    );
+  })}
+</Box>
                   </Box>
                 </Grid>
               ))}
@@ -418,48 +467,96 @@ const MobileCategoriesMenu = ({ open, onClose, categories }) => {
             ))}
           </List>
         ) : (
-          <List sx={{ py: 2 }}>
-            {selectedCategory.items.map((item) => (
-              <ListItem
-                key={item.name}
-                onClick={() => handleItemClick(item.path, selectedCategory.disabled)}
-                sx={{
-                  py: 2,
-                  borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
-                  cursor: selectedCategory.disabled ? 'not-allowed' : 'pointer',
-                  '&:hover': selectedCategory.disabled ? {} : {
-                    background: alpha(premiumColors.gold, 0.05),
-                  }
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <ChevronRight sx={{ color: premiumColors.gold, mr: 2, fontSize: 20 }} />
-                  <ListItemText
-                    primary={item.name}
-                    sx={{
-                      '& .MuiListItemText-primary': {
-                        fontFamily: "'Playfair Display', serif",
-                        fontWeight: item.featured ? 600 : 400,
-                        fontSize: '1rem',
-                        color: premiumColors.white,
-                      }
-                    }}
-                  />
-                  {item.featured && (
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: premiumColors.gold,
-                        ml: 1
-                      }}
-                    />
-                  )}
-                </Box>
-              </ListItem>
-            ))}
-          </List>
+<List sx={{ py: 2 }}>
+  {selectedCategory.items.map((item) => {
+    // Determine if this specific item should be disabled
+    const isItemDisabled = selectedCategory.disabled || item.disabled;
+    
+    return (
+      <ListItem
+        key={item.name}
+        onClick={() => !isItemDisabled && handleItemClick(item.path, isItemDisabled)}
+        sx={{
+          py: 2,
+          borderBottom: `1px solid ${alpha(premiumColors.gold, 0.1)}`,
+          cursor: isItemDisabled ? 'not-allowed' : 'pointer',
+          position: 'relative',
+          '&:hover': isItemDisabled ? {} : {
+            background: alpha(premiumColors.gold, 0.05),
+          }
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', position: 'relative' }}>
+          <ChevronRight sx={{ 
+            color: isItemDisabled ? alpha(premiumColors.white, 0.4) : premiumColors.gold, 
+            mr: 2, 
+            fontSize: 20 
+          }} />
+          <ListItemText
+            primary={item.name}
+            sx={{
+              '& .MuiListItemText-primary': {
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: item.featured ? 600 : 400,
+                fontSize: '1rem',
+                color: isItemDisabled 
+                  ? alpha(premiumColors.white, 0.5) 
+                  : premiumColors.white,
+              }
+            }}
+          />
+          {item.featured && !isItemDisabled && (
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: premiumColors.gold,
+                ml: 1
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Blurry overlay shape for disabled items - EXACTLY LIKE DESKTOP */}
+        {isItemDisabled && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: alpha(premiumColors.gold, 0.05),
+              backdropFilter: 'blur(4px)',
+              borderRadius: 1,
+              border: `1px solid ${alpha(premiumColors.gold, 0.2)}`,
+              boxShadow: `0 0 20px ${alpha(premiumColors.gold, 0.1)} inset`,
+              pointerEvents: 'none',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&::after': {
+                content: '"Coming Soon"',
+                position: 'absolute',
+                color: premiumColors.goldLight,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                background: alpha(premiumColors.gold, 0.3),
+                padding: '2px 8px',
+                borderRadius: '12px',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                border: `1px solid ${alpha(premiumColors.gold, 0.4)}`,
+              }
+            }}
+          />
+        )}
+      </ListItem>
+    );
+  })}
+</List>
         )}
       </Box>
     </Box>
@@ -478,57 +575,56 @@ const Navbar = () => {
   // Cart integration
   const { cartCount, setIsCartOpen } = useCart();
 
-  const categories = [
-    {
-      title: 'Sport',
-      icon: <SportsScore sx={{ fontSize: 18, color: premiumColors.gold }} />,
-      items: [
-        { name: 'T-shirt', path: '/sport' },
-        { name: 'Workout Hoodie', path: '/sport', featured: true },
-        { name: 'Jersey', path: '/sport' },
-        { name: 'Long Sleeve Shirt', path: '/sport' },
-        { name: 'Cropped Pants', path: '/sport' },
-        { name: 'Sleeveless T-Shirt', path: '/sport' },
-        { name: 'Sport Pants', path: '/sport' },
-      ],
-      disabled: false
-    },
-    {
-      title: 'Streetwear',
-      icon: <Watch sx={{ fontSize: 18, color: premiumColors.gold }} />,
-      items: [
-        { name: 'Hoodies', path: '/streetwear' },
-        { name: 'Long Sleeve Shirt', path: '/streetwear' },
-        { name: 'Zipper Shirt', path: '/streetwear' },
-        { name: 'Cargo Pants', path: '/streetwear', featured: true },
-        { name: 'Baggy Pants', path: '/streetwear' },
-        { name: 'Oversized T-Shirts', path: '/streetwear' },
-        { name: 'Normal Pants', path: '/streetwear' },
-      ],
-      disabled: true
-    },
-    {
-      title: 'Religious Wear',
-      icon: <Style sx={{ fontSize: 18, color: premiumColors.gold }} />,
-      items: [
-        { name: 'Qamiss', path: '/religious', featured: true },
-        { name: 'Qachabeeya', path: '/religious' },
-        { name: 'Qamiss & Pants', path: '/religious' },
-      ],
-      disabled: true
-    },
-    {
-      title: 'Casual',
-      icon: <Spa sx={{ fontSize: 18, color: premiumColors.gold }} />,
-      items: [
-        { name: 'Sweater', path: '/casual' },
-        { name: 'Jacket', path: '/casual' },
-        { name: 'Pants', path: '/casual' },
-        { name: 'Coats', path: '/casual', featured: true },
-      ],
-      disabled: true
-    }
-  ];
+const categories = [
+  {
+    title: 'Sport',
+    icon: <SportsScore sx={{ fontSize: 18, color: premiumColors.gold }} />,
+    items: [
+      { name: 'T-shirt', path: '/sport', disabled: false },
+      { name: 'Workout Hoodie', path: '/sport', featured: true, disabled: false },
+      { name: 'Jersey', path: '/sport', disabled: false },
+      { name: 'Long Sleeve Shirt', path: '/sport', disabled: false },
+      { name: 'Sleeveless T-Shirt', path: '/sport', disabled: false },
+      { name: 'Sport Pants', path: '/sport', disabled: false },
+    ],
+    disabled: false
+  },
+  {
+    title: 'Streetwear',
+    icon: <Watch sx={{ fontSize: 18, color: premiumColors.gold }} />,
+    items: [
+      { name: 'Hoodies', path: '/streetwear', disabled: false }, // This one is enabled
+      { name: 'Long Sleeve Shirt', path: '/streetwear', disabled: true },
+      { name: 'Zipper Shirt', path: '/streetwear', disabled: true },
+      { name: 'Cargo Pants', path: '/streetwear', featured: true, disabled: true },
+      { name: 'Baggy Pants', path: '/streetwear', disabled: true },
+      { name: 'Oversized T-Shirts', path: '/streetwear', disabled: true },
+      { name: 'Normal Pants', path: '/streetwear', disabled: true },
+    ],
+    disabled: false // Category is enabled, but individual items control their own state
+  },
+  {
+    title: 'Religious Wear',
+    icon: <Style sx={{ fontSize: 18, color: premiumColors.gold }} />,
+    items: [
+      { name: 'Qamiss', path: '/religious', featured: true, disabled: false }, // This one is enabled
+      { name: 'Qachabeeya', path: '/religious', disabled: true },
+      { name: 'Qamiss & Pants', path: '/religious', disabled: true },
+    ],
+    disabled: false // Category is enabled, but individual items control their own state
+  },
+  {
+    title: 'Casual',
+    icon: <Spa sx={{ fontSize: 18, color: premiumColors.gold }} />,
+    items: [
+      { name: 'Sweater', path: '/casual', disabled: true },
+      { name: 'Jacket', path: '/casual', disabled: true },
+      { name: 'Pants', path: '/casual', disabled: true },
+      { name: 'Coats', path: '/casual', featured: true, disabled: true },
+    ],
+    disabled: true // Category is disabled, affecting all items
+  }
+];
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -598,7 +694,7 @@ const Navbar = () => {
 
   const socialIcons = [
     { icon: <Facebook sx={{ fontSize: 20 }} />, color: '#1877F2' },
-    { icon: <Twitter sx={{ fontSize: 20 }} />, color: '#1DA1F2' },
+    { icon: <BiLogoTiktok sx={{ fontSize: 20 }} />, color: '#ffffff', path: 'https://www.tiktok.com/@tawakkol_wear' },
     { icon: <Instagram sx={{ fontSize: 20 }} />, color: '#E4405F', path: 'https://www.instagram.com/tawakkol_wear/' },
   ];
 

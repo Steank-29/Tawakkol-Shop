@@ -32,6 +32,7 @@ import {
   MobileStepper,
   SwipeableDrawer
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import {
   FlashOn,
   ShoppingBag,
@@ -96,18 +97,12 @@ const colors = {
 /* =======================
    ENHANCED DATA
 ======================= */
-const premiumStats = [
-  { value: '1K+', label: 'Produits Premium', icon: Diamond, sub: 'Collections exclusives' },
-  { value: '50+', label: 'Marques Élite', icon: WorkspacePremium, sub: 'Nike, Adidas, Under Armour' },
-  { value: '10K+', label: 'Athlètes Satisfaits', icon: Verified, sub: '98% de satisfaction' },
-  { value: '24h', label: 'Livraison Express', icon: Timer, sub: 'Gratuite dès 150€' },
-];
 
 const premiumFeatures = [
-  { icon: Shield, text: 'Garantie Qualité 2 Ans', sub: 'Premium garantie' },
-  { icon: LocalShipping, text: 'Retours Gratuits 60 Jours', sub: 'Sans frais' },
+  { icon: Shield, text: 'Garantie Qualité', sub: 'Premium garantie' },
+  { icon: LocalShipping, text: 'Retours Gratuits 15 Jours', sub: 'Sans frais' },
   { icon: Groups, text: 'Support Expert 24/7', sub: 'Conseils personnalisés' },
-  { icon: Loyalty, text: 'Programme Fidélité', sub: 'Points & récompenses' },
+  { icon: Loyalty, text: 'Programme Fidélité', sub: 'Des récompenses' },
   { icon: Thermostat, text: 'Technologie ClimatControl', sub: 'Régulation thermique' },
   { icon: WaterDrop, text: 'Hydrophobe & Respirant', sub: 'Matériaux avancés' },
 ];
@@ -688,6 +683,8 @@ const SizeGuideModal = ({ open, onClose }) => {
    MAIN COMPONENT - ENHANCED
 ======================= */
 export default function Sport() {
+
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
@@ -977,8 +974,8 @@ export default function Sport() {
                     maxWidth: '90%',
                   }}
                 >
-                  Technologies brevetées développées avec la NASA, matériaux innovants 
-                  et design primé par les plus grands athlètes mondiaux. 
+                  Technologies brevetées développées, matériaux innovants 
+                  et design primé par grands athlètes. 
                   <Box component="span" sx={{ color: colors.gold, fontWeight: 700 }}>
                     {' '}L'équipement qui fait la différence.
                   </Box>
@@ -1054,6 +1051,7 @@ export default function Sport() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.8 }}
                     startIcon={<Diamond />}
+                    onClick={() => navigate('/catalog')}
                     endIcon={<ArrowForward />}
                     sx={{
                       background: colors.gradientGold,
@@ -1068,9 +1066,8 @@ export default function Sport() {
                       zIndex: 2,
                       position: 'relative',
                     }}
-                    onClick={() => addToCart(selectedProduct)}
                   >
-                    Ajouter au Kit Élite (€89)
+                    Ajouter au Kit Élite (90 TND)
                   </Button>
 
                   <Button
@@ -1101,65 +1098,12 @@ export default function Sport() {
                       zIndex: 2,
                       position: 'relative',
                     }}
+                    href='/catalog'
                   >
                     Configurer mon Kit
                   </Button>
                 </Stack>
 
-                {/* Enhanced Stats */}
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={{ xs: 3, sm: 4 }}
-                  flexWrap="wrap"
-                  sx={{ position: 'relative', zIndex: 2 }}
-                >
-                  {premiumStats.map((stat, index) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 1 + index * 0.1 }}
-                    >
-                      <Card
-                        sx={{
-                          background: alpha(colors.black, 0.6),
-                          border: `1px solid ${alpha(colors.gold, 0.1)}`,
-                          borderRadius: 2,
-                          p: 2,
-                          minWidth: 150
-                        }}
-                      >
-                        <Stack spacing={1}>
-                          <Stack direction="row" alignItems="center" spacing={1.5}>
-                            <Box
-                              sx={{
-                                background: alpha(colors.gold, 0.1),
-                                borderRadius: 2,
-                                p: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <stat.icon sx={{ color: colors.gold, fontSize: '1.5rem' }} />
-                            </Box>
-                            <Box>
-                              <Typography fontWeight={900} color={colors.gold} sx={{ fontSize: '1.5rem' }}>
-                                {stat.value}
-                              </Typography>
-                              <Typography fontSize="0.85rem" color={colors.white} fontWeight={600}>
-                                {stat.label}
-                              </Typography>
-                              <Typography fontSize="0.7rem" opacity={0.7} color={colors.goldSoft}>
-                                {stat.sub}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        </Stack>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </Stack>
               </Box>
             </motion.div>
           </Grid>
@@ -1562,34 +1506,35 @@ export default function Sport() {
               mb: 3,
             }}
           >
-            <Button
-              component={motion.button}
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: `0 20px 50px ${alpha(colors.gold, 0.4)}`
-              }}
-              whileTap={{ scale: 0.95 }}
-              variant="outlined"
-              endIcon={<ArrowForward />}
-              sx={{
-                borderColor: colors.gold,
-                color: colors.black,
-                px: 5,
-                py: 1.5,
-                borderRadius: 2,
-                fontSize: '1rem',
-                fontWeight: 600,
-                background: colors.gradientGold,
-                borderWidth: 2,
-                '&:hover': {
-                  borderColor: colors.gold,
-                  background: colors.gradientGold,
-                  borderWidth: 2,
-                },
-              }}
-            >
-              Voir toutes les collections
-            </Button>
+<Button
+  component={motion.button}
+  whileHover={{ 
+    scale: 1.05,
+    boxShadow: `0 20px 50px ${alpha(colors.gold, 0.4)}`
+  }}
+  whileTap={{ scale: 0.95 }}
+  variant="outlined"
+  endIcon={<ArrowForward />}
+onClick={() => navigate('/catalog')}
+  sx={{
+    borderColor: colors.gold,
+    color: colors.black,
+    px: 5,
+    py: 1.5,
+    borderRadius: 2,
+    fontSize: '1rem',
+    fontWeight: 600,
+    background: colors.gradientGold,
+    borderWidth: 2,
+    '&:hover': {
+      borderColor: colors.gold,
+      background: colors.gradientGold,
+      borderWidth: 2,
+    },
+  }}
+>
+  Voir toutes les collections
+</Button>
           </Box>
         </Box>
       </Container>

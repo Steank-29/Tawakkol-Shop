@@ -214,6 +214,7 @@ const Home = () => {
                       onClick={() => faireDefilerVers('produits')}
                       startIcon={<ShoppingBag />}
                       endIcon={<ArrowForward />}
+                      href='/catalog'
                       sx={{
                         background: premiumColors.premiumGradient,
                         color: premiumColors.noir,
@@ -266,32 +267,6 @@ const Home = () => {
                     </Button>
                   </Stack>
 
-                  {/* Statistiques */}
-                  <Stack direction="row" spacing={4} sx={{ opacity: 0.9, ml: 2 }}>
-                    {[
-                      { nombre: "1K+", label: "Clients Satisfaits" },
-                      { nombre: "50+", label: "Marques Premium" },
-                      { nombre: "1+", label: "Pays Desservis" }
-                    ].map((stat, index) => (
-                      <Box key={index}>
-                        <Typography sx={{ 
-                          color: premiumColors.gold, 
-                          fontSize: '1.4rem', 
-                          fontWeight: 800,
-                          fontFamily: "'Fjalla One', sans-serif"
-                        }}>
-                          {stat.nombre}
-                        </Typography>
-                        <Typography sx={{ 
-                          color: premiumColors.goldLight, 
-                          fontSize: '0.9rem',
-                          fontFamily: "'Fjalla One', sans-serif"
-                        }}>
-                          {stat.label}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
                 </Box>
               </Fade>
             </Grid>
@@ -1158,14 +1133,14 @@ const Home = () => {
                   },
                   { 
                     icon: '🚚', 
-                    value: 'Livraison Express', 
+                    value: 'First Delivery', 
                     label: 'Délai garanti sous 48h',
                     color: '#e6f7ff'
                   },
                   { 
                     icon: '🔄', 
                     value: 'Retour Facile', 
-                    label: '30 jours pour changer d\'avis',
+                    label: '15 jours pour changer d\'avis',
                     color: '#d4af37'
                   },
                   { 
