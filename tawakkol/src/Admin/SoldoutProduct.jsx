@@ -755,13 +755,7 @@ const SoldoutProduct = () => {
                     </Box>
                   </Box>
 
-                  <PremiumButton
-                    startIcon={<RefreshIcon />}
-                    onClick={fetchProducts}
-                    disabled={refreshing}
-                  >
-                    {refreshing ? 'SYNCING...' : 'REAL-TIME SYNC'}
-                  </PremiumButton>
+                 
 
                   <PremiumButton
                     startIcon={<DownloadIcon />}

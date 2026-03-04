@@ -607,9 +607,9 @@ const categories = [
     title: 'Religious Wear',
     icon: <Style sx={{ fontSize: 18, color: premiumColors.gold }} />,
     items: [
-      { name: 'Qamiss', path: '/religious', featured: true, disabled: false }, // This one is enabled
-      { name: 'Qachabeeya', path: '/religious', disabled: true },
-      { name: 'Qamiss & Pants', path: '/religious', disabled: true },
+      { name: 'Qamiss', path: '/religion', featured: true, disabled: false }, // This one is enabled
+      { name: 'Qachabeeya', path: '/religion', disabled: true },
+      { name: 'Qamiss & Pants', path: '/religion', disabled: true },
     ],
     disabled: false // Category is enabled, but individual items control their own state
   },

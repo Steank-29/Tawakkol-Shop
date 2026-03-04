@@ -225,7 +225,7 @@ const AdminBar = ({
       sub: [
         { title: 'Ajouter un produit', path: '/Admin-Panel/Add-New-Product' },
         { title: 'Gérer les produits', path: '/Admin-Panel/Manage-Religion' },
-        { title: 'Analyser les produits', path: '/Admin-Panel/Sold-Out-Religion' },
+        { title: 'Analyser les produits', path: '/Admin-Panel/Stats-Religion' },
       ],
       roles: ['admin', 'super-admin']
     },
