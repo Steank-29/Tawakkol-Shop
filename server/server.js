@@ -15,6 +15,7 @@ const adminRoutes = require('./routes/admin');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/order');
 const contactRoutes = require('./routes/contact');
+const relproductRoutes = require('./routes/relProduct');
 
 // Initialize app
 const app = express();
@@ -124,6 +125,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/relproducts', relproductRoutes);
 
 // ============ CONFIGURATION ENDPOINT ============
 // This helps frontend detect the correct API URL
@@ -239,6 +241,10 @@ app.use('*', (req, res) => {
       products: {
         list: 'GET /api/products',
         single: 'GET /api/products/:id'
+      },
+      Religious_products: {
+        list: 'GET /api/relProducts',
+        single: 'GET /api/relProducts/:id'
       }
     }
   });
@@ -292,6 +298,7 @@ const startServer = async () => {
       console.log('\n📡 API Endpoints:');
       console.log(`   👤 Admin: http://localhost:${PORT}/api/admin`);
       console.log(`   🛍️  Products: http://localhost:${PORT}/api/products`);
+      console.log(`   🛍️  Products: http://localhost:${PORT}/api/relProducts`);
       console.log(`   ❤️  Health: http://localhost:${PORT}/health`);
       console.log(`   ⚙️  Config: http://localhost:${PORT}/api/config`);
       
