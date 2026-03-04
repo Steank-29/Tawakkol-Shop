@@ -210,12 +210,22 @@ const AdminBar = ({
       roles: ['admin', 'super-admin']
     },
     {
-      title: 'Produit',
+      title: 'Sport',
       icon: <Inventory />,
       sub: [
         { title: 'Ajouter un produit', path: '/Admin-Panel/Creating-New-Product' },
         { title: 'Gérer les produits', path: '/Admin-Panel/Manage-Products' },
         { title: 'Analyser les produits', path: '/Admin-Panel/Sold-Out-Products' },
+      ],
+      roles: ['admin', 'super-admin']
+    },
+    {
+      title: 'Religion',
+      icon: <Inventory />,
+      sub: [
+        { title: 'Ajouter un produit', path: '/Admin-Panel/Add-New-Product' },
+        { title: 'Gérer les produits', path: '/Admin-Panel/Manage-Religion' },
+        { title: 'Analyser les produits', path: '/Admin-Panel/Sold-Out-Religion' },
       ],
       roles: ['admin', 'super-admin']
     },

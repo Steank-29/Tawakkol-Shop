@@ -19,6 +19,8 @@ import Order from './Admin/Order'
 import Messagerie from './Admin/Messagerie'
 import Facture from './Admin/Facture';
 import ScrollToTop from './Config/ScrollToTop'; // Import the ScrollToTop component
+import AddReligion from './Admin/AddReligion';
+import ManageReligion from './Admin/ManageReligion';
 
 // ScrollToTop component that uses useLocation - MUST be inside Router context
 const RefreshToTop = () => {
@@ -130,12 +132,36 @@ const router = createBrowserRouter([
     )
   },
   {
+    path: '/Admin-Panel/Add-New-Product',
+    element: (
+      <RootLayout>
+        <ProtectedRoute>
+          <AdminLayout>
+            <AddReligion />
+          </AdminLayout>
+        </ProtectedRoute>
+      </RootLayout>
+    )
+  },
+  {
     path: '/Admin-Panel/Manage-Products',
     element: (
       <RootLayout>
         <ProtectedRoute>
           <AdminLayout>
             <ManageProducts />
+          </AdminLayout>
+        </ProtectedRoute>
+      </RootLayout>
+    )
+  },
+    {
+    path: '/Admin-Panel/Manage-Religion',
+    element: (
+      <RootLayout>
+        <ProtectedRoute>
+          <AdminLayout>
+            <ManageReligion />
           </AdminLayout>
         </ProtectedRoute>
       </RootLayout>
