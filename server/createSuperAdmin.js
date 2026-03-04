@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Admin = require('../models/admin');
+const Admin = require('../server/models/admin')
 require('dotenv').config();
 
 const createSuperAdmin = async () => {
@@ -20,12 +20,12 @@ const createSuperAdmin = async () => {
 
     // Create super admin
     const superAdmin = await Admin.create({
-      firstName: 'Super',
-      lastName: 'Admin',
-      email: 'superadmin@tawakkol.com',
-      password: 'superadmin123',
-      phoneNumber: '+201234567890',
-      contactEmail: 'superadmin@tawakkol.com',
+      firstName: 'Iheb',
+      lastName: 'Alili',
+      email: 'ihebalili@tawakkol.tn',
+      password: 'Super@lili03',
+      phoneNumber: '+20129442957',
+      contactEmail: 'ihebalili@tawakkol.tn',
       role: 'super-admin'
     });
 
