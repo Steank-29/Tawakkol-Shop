@@ -600,19 +600,32 @@ const renderProductGrid = () => {
 <ProductCard 
   onClick={() => handleProductClick(product)}
   sx={{
-    height: '60vh', // Fixed height as requested
-    width: '1200px', // Fixed width for larger cards
+    height: { xs: 'auto', md: '60vh' }, // Auto height on mobile, fixed on desktop
+    width: { xs: '100%', md: '1200px' }, // Full width on mobile, fixed on desktop
+    display: 'flex',
+    flexDirection: { xs: 'column', md: 'row' }, // Stack on mobile, row on desktop
+    maxWidth: '100%', // Prevent overflow
+    overflow: 'hidden',
   }}
 >
-  {/* LEFT SIDE - IMAGE - 33% OF CARD WIDTH */}
-  <ProductImageContainer>
+  {/* LEFT SIDE - IMAGE - Full width on mobile, 33% on desktop */}
+  <ProductImageContainer sx={{ 
+    width: { xs: '100%', md: '33%' },
+    height: { xs: '300px', md: '100%' }, // Fixed height on mobile
+    position: 'relative',
+  }}>
     <ProductImage 
       src={product.mainImage?.url || '/placeholder.jpg'} 
       alt={product.name} 
+      sx={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+      }}
     />
     
     <QuickViewOverlay>
-      <ZoomIn sx={{ color: palette.goldLight, fontSize: 48 }} />
+      <ZoomIn sx={{ color: palette.goldLight, fontSize: { xs: 32, md: 48 } }} />
     </QuickViewOverlay>
 
     {/* Badges */}
@@ -665,35 +678,39 @@ const renderProductGrid = () => {
     </IconButton>
   </ProductImageContainer>
 
-  {/* RIGHT SIDE - CONTENT - 67% OF CARD WIDTH */}
+  {/* RIGHT SIDE - CONTENT - Full width on mobile, 67% on desktop */}
   <CardContent sx={{ 
-    width: '67%',
-    height: '100%',
-    p: 3, // Increased padding
+    width: { xs: '100%', md: '67%' },
+    height: { xs: 'auto', md: '100%' },
+    p: { xs: 2, sm: 3 }, // Responsive padding
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
   }}>
-    {/* Product Title - Large and Bold */}
+    {/* Product Title - Responsive font size */}
     <Typography
       variant="h5"
       sx={{
         fontWeight: 900,
         color: palette.noir,
         mb: 1,
-        fontSize: '1.5rem',
-        textTransform:'uppercase'
+        fontSize: { xs: '1.2rem', sm: '1.3rem', md: '1.5rem' },
+        textTransform: 'uppercase',
       }}
     >
       {product.name}
     </Typography>
 
-    {/* Product Description */}
+    {/* Product Description - Show less on mobile */}
     <Typography
       variant="body1"
       sx={{
         color: palette.gray,
-        fontSize: '1rem',
+        fontSize: { xs: '0.9rem', md: '1rem' },
+        overflow: 'hidden',
+        display: '-webkit-box',
+        WebkitLineClamp: { xs: 2, md: 3 }, // Limit lines on mobile
+        WebkitBoxOrient: 'vertical',
       }}
     >
       {product.description}
@@ -701,7 +718,7 @@ const renderProductGrid = () => {
 
     {/* Sizes Section - Only show if sizes exist */}
     {product.sizes?.length > 0 && (
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: { xs: 1.5, md: 2.5 } }}>
         <Typography 
           variant="subtitle2" 
           sx={{ 
@@ -709,14 +726,14 @@ const renderProductGrid = () => {
             color: palette.noir,
             mt: 1,
             textTransform: 'uppercase',
-            fontSize: '0.85rem',
+            fontSize: { xs: '0.75rem', md: '0.85rem' },
             letterSpacing: '0.5px',
           }}
         >
           Tailles disponibles
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          {product.sizes.map((size) => (
+          {product.sizes.slice(0, 4).map((size) => ( // Limit to 4 on mobile
             <Chip
               key={size}
               label={size}
@@ -726,19 +743,25 @@ const renderProductGrid = () => {
                 color: palette.goldDark,
                 fontWeight: 600,
                 borderRadius: '8px',
+                fontSize: { xs: '0.7rem', md: '0.8rem' },
                 '&:hover': {
                   bgcolor: alpha(palette.gold, 0.2),
                 },
               }}
             />
           ))}
+          {product.sizes.length > 4 && (
+            <Typography variant="caption" sx={{ color: palette.gray, alignSelf: 'center' }}>
+              +{product.sizes.length - 4}
+            </Typography>
+          )}
         </Stack>
       </Box>
     )}
 
     {/* Colors Section - Only show if colors exist */}
     {product.colors?.length > 0 && (
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: { xs: 1.5, md: 2.5 } }}>
         <Typography 
           variant="subtitle2" 
           sx={{ 
@@ -746,19 +769,19 @@ const renderProductGrid = () => {
             color: palette.noir,
             mt: 1,
             textTransform: 'uppercase',
-            fontSize: '0.85rem',
+            fontSize: { xs: '0.75rem', md: '0.85rem' },
             letterSpacing: '0.5px',
           }}
         >
           Couleurs disponibles
         </Typography>
         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-          {product.colors.map((color) => (
+          {product.colors.slice(0, 5).map((color) => ( // Limit to 5 on mobile
             <Tooltip key={color.name} title={color.name} arrow>
               <Box
                 sx={{
-                  width: 30,
-                  height: 30,
+                  width: { xs: 24, md: 30 },
+                  height: { xs: 24, md: 30 },
                   borderRadius: '50%',
                   backgroundColor: color.value,
                   border: `2px solid ${palette.white}`,
@@ -773,14 +796,19 @@ const renderProductGrid = () => {
               />
             </Tooltip>
           ))}
+          {product.colors.length > 5 && (
+            <Typography variant="caption" sx={{ color: palette.gray }}>
+              +{product.colors.length - 5}
+            </Typography>
+          )}
         </Stack>
       </Box>
     )}
 
-    {/* Variants Summary - Compact view if both exist */}
+    {/* Variants Summary - Hide on mobile to save space */}
     {product.sizes?.length > 0 && product.colors?.length > 0 && (
       <Box sx={{ 
-        display: 'flex', 
+        display: { xs: 'none', md: 'flex' }, // Hide on mobile
         alignItems: 'center', 
         gap: 2, 
         mt: 2,
@@ -807,16 +835,16 @@ const renderProductGrid = () => {
     {/* Spacer to push price and button to bottom */}
     <Box sx={{ flexGrow: 1 }} />
 
-    {/* Price and Quick Add Button - NOW FIXED AND VISIBLE */}
+    {/* Price and Quick Add Button */}
     <Box sx={{ 
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center',
       mt: 0,
-      pt: 2,
+      pt: { xs: 1.5, md: 2 },
       borderTop: `2px solid ${alpha(palette.gold, 0.2)}`,
     }}>
-      {/* Price - Large and Bold */}
+      {/* Price - Responsive font size */}
       <Box>
         <Typography 
           variant="caption" 
@@ -824,7 +852,7 @@ const renderProductGrid = () => {
             color: palette.gray,
             fontWeight: 500,
             textTransform: 'uppercase',
-            fontSize: '0.75rem',
+            fontSize: { xs: '0.65rem', md: '0.75rem' },
             letterSpacing: '1px',
             display: 'block',
             mb: 0.5,
@@ -837,7 +865,7 @@ const renderProductGrid = () => {
           sx={{
             color: palette.gold,
             fontWeight: 900,
-            fontSize: '2.2rem',
+            fontSize: { xs: '1.6rem', sm: '1.8rem', md: '2.2rem' },
             lineHeight: 1,
             letterSpacing: '-0.02em',
           }}
@@ -846,15 +874,16 @@ const renderProductGrid = () => {
         </Typography>
       </Box>
       
-      {/* Quick Add Button */}
+      {/* Quick Add Button - Smaller on mobile */}
       <Tooltip title="Ajout rapide" arrow>
         <IconButton
           onClick={(e) => handleQuickAdd(product, e)}
           sx={{
             bgcolor: palette.gold,
             color: palette.white,
-            width: 56,
-            height: 56,
+            width: { xs: 48, md: 56 },
+            height: { xs: 48, md: 56 },
+            mr:4,
             '&:hover': {
               bgcolor: palette.goldDark,
               transform: 'scale(1.1)',
@@ -864,17 +893,17 @@ const renderProductGrid = () => {
           }}
           size="large"
         >
-          <AddShoppingCart sx={{ fontSize: 28 }} />
+          <AddShoppingCart sx={{ fontSize: { xs: 22, md: 28 } }} />
         </IconButton>
       </Tooltip>
     </Box>
 
-    {/* Stock Status - Small indicator at bottom */}
+    {/* Stock Status */}
     <Box sx={{ 
       display: 'flex', 
       alignItems: 'center', 
       gap: 1, 
-      mt: 1.5,
+      mt: { xs: 1, md: 1.5 },
     }}>
       <Box sx={{ 
         width: 8, 
@@ -883,7 +912,11 @@ const renderProductGrid = () => {
         bgcolor: getStockStatus(product.stock).color,
         boxShadow: `0 0 8px ${alpha(getStockStatus(product.stock).color, 0.5)}`,
       }} />
-      <Typography variant="caption" sx={{ color: palette.gray, fontWeight: 500 }}>
+      <Typography variant="caption" sx={{ 
+        color: palette.gray, 
+        fontWeight: 500,
+        fontSize: { xs: '0.65rem', md: '0.75rem' },
+      }}>
         {getStockStatus(product.stock).label} • {product.stock} unités
       </Typography>
     </Box>
