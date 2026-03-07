@@ -27,7 +27,8 @@ const allowedOrigins = [
   'https://tawakkol.tn',           // Add your domain
   'https://www.tawakkol.tn',        // Add www subdomain
   'http://tawakkol.tn',             // Add non-https version
-  'http://www.tawakkol.tn'           // Add non-https www
+  'http://www.tawakkol.tn',           // Add non-https www
+  'https://tawakkol-shop.onrender.com'
 
 ].filter(Boolean); // Remove undefined values
 
