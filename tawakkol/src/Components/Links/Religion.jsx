@@ -638,11 +638,6 @@ const renderProductGrid = () => {
       flexWrap: 'wrap',
       zIndex: 2,
     }}>
-      <CategoryChip
-        icon={<Mosque />}
-        label={product.category}
-        size="small"
-      />
       <Chip
         label={getStockStatus(product.stock).label}
         size="small"
