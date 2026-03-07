@@ -273,7 +273,7 @@ const Footer = () => {
                     <Email sx={{ color: premiumColors.gold, fontSize: 18 }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="contact@tawakkol.com"
+                    primary="info@tawakkol.tn"
                     primaryTypographyProps={{
                       sx: { 
                         color: alpha(premiumColors.white, 0.9), 
@@ -288,7 +288,7 @@ const Footer = () => {
                     <Phone sx={{ color: premiumColors.gold, fontSize: 18 }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="+33 1 23 45 67 89"
+                    primary="29 442 957"
                     primaryTypographyProps={{
                       sx: { 
                         color: alpha(premiumColors.white, 0.9), 
@@ -303,7 +303,7 @@ const Footer = () => {
                     <LocationOn sx={{ color: premiumColors.gold, fontSize: 18 }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="123 Avenue Montaigne, 75008 Tunis"
+                    primary="Ezzahra, Ben Arous, Tunisie 2034"
                     primaryTypographyProps={{
                       sx: { 
                         color: alpha(premiumColors.white, 0.9), 

@@ -693,7 +693,7 @@ const categories = [
   ];
 
   const socialIcons = [
-    { icon: <Facebook sx={{ fontSize: 20 }} />, color: '#1877F2' },
+    { icon: <Facebook sx={{ fontSize: 20 }} />, color: '#1877F2', path:'https://www.facebook.com/profile.php?id=61578870274724' },
     { icon: <BiLogoTiktok sx={{ fontSize: 20 }} />, color: '#ffffff', path: 'https://www.tiktok.com/@tawakkol_wear' },
     { icon: <Instagram sx={{ fontSize: 20 }} />, color: '#E4405F', path: 'https://www.instagram.com/tawakkol_wear/' },
   ];
