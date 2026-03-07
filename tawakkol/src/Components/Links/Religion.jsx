@@ -53,8 +53,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
-import axios from 'axios';
-import API_BASE from '../../Config/api.js';
+import religiousProducts from '../../data/relproduct.js'; // Import local religious products data
 
 // ==================== ISLAMIC INSPIRED PALETTE ====================
 const palette = {
@@ -362,7 +361,7 @@ const SwipingIslamicText = () => {
   }, []);
 
   return (
-    <Box sx={{ width: '100%', overflow: 'hidden', mt: 6, mb: 1 }}>
+    <Box sx={{ width: '100%', overflow: 'hidden', mt:3, mb: 1 }}>
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -413,23 +412,24 @@ const Religion = () => {
     severity: 'success'
   });
 
-  // ==================== API CALLS ====================
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/relproducts`);
-      setProducts(response.data.products || []);
-    } catch (err) {
-      console.error('Erreur chargement produits:', err);
-      showNotification('Erreur lors du chargement des produits', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // ==================== LOAD LOCAL PRODUCTS ====================
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        // Simulate network delay for smooth loading experience
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setProducts(religiousProducts);
+      } catch (err) {
+        console.error('Erreur chargement produits:', err);
+        showNotification('Erreur lors du chargement des produits', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   // ==================== UTILITIES ====================
   const showNotification = (message, severity = 'success') => {

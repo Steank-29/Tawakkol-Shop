@@ -112,7 +112,6 @@ const Checkout = () => {
     postalCode: '',
     country: 'Tunisie',
     notes: '',
-    clothingSize: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -198,7 +197,6 @@ const Checkout = () => {
           postalCode: formData.postalCode.trim(),
           country: formData.country,
           notes: formData.notes.trim(),
-          clothingSize: formData.clothingSize,
         },
         items: cart.map(item => ({
           productId: item._id,
@@ -437,43 +435,6 @@ const Checkout = () => {
                   }}
                   sx={{ mb: 2 }}
                 />
-              </Grid>
-              
-              {/* Clothing Size Select */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel id="clothing-size-label">Taille de vêtement (optionnel)</InputLabel>
-                  <Select
-                    labelId="clothing-size-label"
-                    value={formData.clothingSize}
-                    label="Taille de vêtement (optionnel)"
-                    onChange={(e) => setFormData({...formData, clothingSize: e.target.value})}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <Straighten sx={{ color: palette.gold, mr: 1 }} />
-                      </InputAdornment>
-                    }
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: palette.gold,
-                        },
-                      },
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Sélectionnez votre taille</em>
-                    </MenuItem>
-                    {sizeOptions.map((size) => (
-                      <MenuItem key={size} value={size}>
-                        {size}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <Typography variant="caption" sx={{ color: palette.slate, mt: 1, display: 'block' }}>
-                    Cette taille sera utilisée pour tous les vêtements de votre commande
-                  </Typography>
-                </FormControl>
               </Grid>
               
               <Grid size={12}>
@@ -1105,23 +1066,6 @@ const Checkout = () => {
                         {deliveryDate}
                       </Typography>
                     </ListItem>
-                    {formData.clothingSize && (
-                      <ListItem sx={{ px: 0, py: 1.5 }}>
-                        <ListItemText
-                          primary="Taille de vêtement"
-                          primaryTypographyProps={{ color: palette.slate }}
-                        />
-                        <Chip
-                          label={formData.clothingSize}
-                          size="small"
-                          sx={{
-                            bgcolor: `${palette.gold}15`,
-                            color: palette.goldDark,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </ListItem>
-                    )}
                   </List>
 
                   <Divider sx={{ my: 3 }} />

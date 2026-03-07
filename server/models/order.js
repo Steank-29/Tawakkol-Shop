@@ -52,10 +52,6 @@ const orderSchema = new mongoose.Schema({
       default: 'Tunisie',
       trim: true
     },
-    clothingSize: {
-      type: String,
-      trim: true
-    },
     notes: {
       type: String,
       trim: true

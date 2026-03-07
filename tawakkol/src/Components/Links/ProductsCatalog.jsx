@@ -25,7 +25,7 @@ import {
   Badge,
   Alert,
   Snackbar,
-  Skeleton, // Add this import
+  Skeleton,
 } from '@mui/material';
 import {
   Close,
@@ -43,8 +43,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
-import axios from 'axios';
-import API_BASE from '../../Config/api.js';
+import productsData from '../../data/Product.js'; // Import local products data
 
 // Sophisticated color palette
 const palette = {
@@ -93,11 +92,11 @@ const ProductCardSkeleton = () => (
           width: '100%',
           height: '100%',
           bgcolor: 'rgba(0,0,0,0.04)',
-          transform: 'none', // Remove default skeleton animation transform
+          transform: 'none',
         }}
       />
       
-      {/* Badge Skeletons - Exact same positioning as real badges */}
+      {/* Badge Skeletons */}
       <Box sx={{ 
         position: 'absolute', 
         top: 12, 
@@ -113,7 +112,7 @@ const ProductCardSkeleton = () => (
           height={24} 
           sx={{ 
             bgcolor: 'rgba(0,0,0,0.08)',
-            borderRadius: '16px', // Match Chip border radius
+            borderRadius: '16px',
           }} 
         />
         <Skeleton 
@@ -128,9 +127,9 @@ const ProductCardSkeleton = () => (
       </Box>
     </Box>
 
-    {/* Content - Exact same padding as real card */}
+    {/* Content */}
     <CardContent sx={{ p: { xs: 2, sm: 2.5 }, flexGrow: 1 }}>
-      {/* Title Skeleton - Exact same typography styles */}
+      {/* Title Skeleton */}
       <Skeleton 
         variant="text" 
         width="80%" 
@@ -143,7 +142,7 @@ const ProductCardSkeleton = () => (
         }} 
       />
 
-      {/* Description Skeleton - Two lines with exact same spacing */}
+      {/* Description Skeleton */}
       <Skeleton 
         variant="text" 
         width="100%" 
@@ -166,7 +165,7 @@ const ProductCardSkeleton = () => (
         }} 
       />
 
-      {/* Price & Rating Row - Exact same flex layout */}
+      {/* Price & Rating Row */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -186,7 +185,7 @@ const ProductCardSkeleton = () => (
               borderRadius: 1
             }} 
           />
-          {/* Variants text skeleton - matches "Available in X sizes • Y colors" */}
+          {/* Variants text skeleton */}
           <Skeleton 
             variant="text" 
             width="80%" 
@@ -200,7 +199,7 @@ const ProductCardSkeleton = () => (
           />
         </Box>
         
-        {/* Rating Skeleton - Exact same as rating chip */}
+        {/* Rating Skeleton */}
         <Skeleton 
           variant="rounded" 
           width={60} 
@@ -213,7 +212,7 @@ const ProductCardSkeleton = () => (
       </Box>
     </CardContent>
 
-    {/* Quick Add Button Skeleton - Exact same as real button */}
+    {/* Quick Add Button Skeleton */}
     <Box sx={{ p: { xs: 2, sm: 2 }, pt: 0 }}>
       <Skeleton 
         variant="rounded" 
@@ -248,21 +247,23 @@ const ProductsCatalog = () => {
   });
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    // Load products from local data
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        // Simulate network delay for smooth loading experience
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setProducts(productsData);
+      } catch (err) {
+        console.error('Error loading products:', err);
+        showSnackbar('Failed to load products', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API_BASE}/api/products`);
-      setProducts(res.data.products || []);
-    } catch (err) {
-      console.error('Error loading products:', err);
-      showSnackbar('Failed to load products', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadProducts();
+  }, []);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
@@ -296,11 +297,16 @@ const ProductsCatalog = () => {
     }
     
     switch(sortBy) {
-      case 'price-low': return filtered.sort((a, b) => a.price - b.price);
-      case 'price-high': return filtered.sort((a, b) => b.price - a.price);
-      case 'newest': return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      case 'rating': return filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      default: return filtered;
+      case 'price-low': 
+        return filtered.sort((a, b) => a.price - b.price);
+      case 'price-high': 
+        return filtered.sort((a, b) => b.price - a.price);
+      case 'newest': 
+        return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'rating': 
+        return filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      default: 
+        return filtered;
     }
   }, [products, category, searchQuery, sortBy]);
 
@@ -922,7 +928,7 @@ const ProductsCatalog = () => {
                         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                           {selectedProduct.colors.map((color) => (
                             <Box
-                              key={color.name}
+                              key={color._id || color.name}
                               onClick={() => setSelectedColor(color)}
                               sx={{
                                 width: 40,
@@ -930,7 +936,7 @@ const ProductsCatalog = () => {
                                 borderRadius: '50%',
                                 bgcolor: color.value,
                                 cursor: 'pointer',
-                                border: `3px solid ${selectedColor?.name === color.name ? palette.gold : 'transparent'}`,
+                                border: `3px solid ${selectedColor?._id === color._id ? palette.gold : 'transparent'}`,
                                 position: 'relative',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -947,7 +953,7 @@ const ProductsCatalog = () => {
                                 },
                               }}
                             >
-                              {selectedColor?.name === color.name && (
+                              {selectedColor?._id === color._id && (
                                 <CheckCircle sx={{ 
                                   color: 'white', 
                                   fontSize: 20,
@@ -1038,7 +1044,7 @@ const ProductsCatalog = () => {
                               size="small"
                               sx={{
                                 bgcolor: palette.gold + '20',
-                                color: palette.goldDark,
+                                color: palette.gold,
                                 fontWeight: 600,
                               }}
                             />
@@ -1049,7 +1055,7 @@ const ProductsCatalog = () => {
                               size="small"
                               sx={{
                                 bgcolor: palette.gold + '20',
-                                color: palette.goldDark,
+                                color: palette.gold,
                                 fontWeight: 600,
                               }}
                               avatar={
