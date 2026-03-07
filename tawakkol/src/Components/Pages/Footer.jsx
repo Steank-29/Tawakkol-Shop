@@ -41,6 +41,7 @@ import {
   Lock,
   Star
 } from '@mui/icons-material';
+import { BiLogoTiktok } from 'react-icons/bi';
 
 // Reuse the premium colors from your navbar
 const premiumColors = {
@@ -70,11 +71,9 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: <Facebook />, color: '#1877F2', href: 'https://facebook.com' },
+    { icon: <Facebook />, color: '#1877F2', href: 'https://www.facebook.com/profile.php?id=61578870274724'  },
     { icon: <Instagram />, color: '#E4405F', href: 'https://instagram.com/tawakkol_wear/' },
-    { icon: <Twitter />, color: '#1DA1F2', href: 'https://twitter.com' },
-    { icon: <YouTube />, color: '#FF0000', href: 'https://youtube.com' },
-    { icon: <Pinterest />, color: '#E60023', href: 'https://pinterest.com' }
+    { icon: <BiLogoTiktok />, color: '#ffffff', href: 'https://twitter.com/tawakkol_wear/' },
   ];
 
   const quickLinks = [
