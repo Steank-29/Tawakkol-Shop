@@ -7,35 +7,35 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'], // Add this
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'Tawakkol Store',
         short_name: 'Tawakkol',
-        description: 'Tawakkol store', // Add description
-        theme_color: '#d4af37', // Add theme color
+        description: 'Tawakkol store',
+        theme_color: '#d4af37',
         background_color: '#d4af37',
         display: 'standalone',
-        start_url: '/', // Changed from '/login' - start_url should be the root
-        scope: '/', // Add scope
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: '../tawakkol/src/assets/tawakkol.png', // Fixed path - should be from public directory
+            src: '../tawakkol/src/assets/tawakkol.png', // FIXED: Use path from public folder
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable' // Add purpose for better installability
+            purpose: 'any maskable'
           },
           {
-            src: '../tawakkol/src/assets/tawakkol.png', // Fixed path
+            src: '../tawakkol/src/assets/tawakkol.png', // FIXED: Use path from public folder
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable' // Add purpose for better installability
+            purpose: 'any maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'], // Add glob patterns
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
-        runtimeCaching: [ // Add runtime caching for API calls
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        runtimeCaching: [
           {
             urlPattern: /^https:\/\/tawakkol-shop\.onrender\.com\/.*/i,
             handler: 'NetworkFirst',
@@ -43,7 +43,7 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxAgeSeconds: 60 * 60 * 24
               },
               networkTimeoutSeconds: 10
             }
@@ -51,7 +51,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true, // Enable PWA in development
+        enabled: true,
         type: 'module'
       }
     })
@@ -72,8 +72,14 @@ export default defineConfig({
     chunkSizeWarningLimit: 4000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'] // Add manual chunks
+        // FIXED: Changed from object to function
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) {
+              return 'vendor-react'
+            }
+            return 'vendor'
+          }
         }
       }
     }
