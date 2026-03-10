@@ -19,21 +19,21 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: '../tawakkol/src/assets/tawakkol.png', // FIXED: Use path from public folder
+            src: '/Tawakkol-Top.jpg', // FIXED: Use path from public folder
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/jpg',
             purpose: 'any maskable'
           },
           {
-            src: '../tawakkol/src/assets/tawakkol.png', // FIXED: Use path from public folder
+            src: '/Tawakkol-Top.jpg', // FIXED: Use path from public folder
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/jpg',
             purpose: 'any maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,jpg,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
