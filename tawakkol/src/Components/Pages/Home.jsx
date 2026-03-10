@@ -218,12 +218,12 @@ const Home = () => {
                       sx={{
                         background: premiumColors.premiumGradient,
                         color: premiumColors.noir,
-                        py: 2.5,
-                        px: 5,
+                        py: { xs: 1.5, sm: 2.5 }, // Reduced padding on mobile
+                        px: { xs: 3, sm: 5 },      // Reduced padding on mobile
                         borderRadius: 3,
                         fontFamily: "'Playfair Display', serif",
                         fontWeight: 800,
-                        fontSize: '1.1rem',
+                        fontSize: { xs: '0.9rem', sm: '1.1rem' }, // Smaller font on mobile
                         textTransform: 'none',
                         boxShadow: `0 15px 40px ${premiumColors.gold}40`,
                         minWidth: { xs: '100%', sm: 'auto' },
@@ -245,12 +245,12 @@ const Home = () => {
                       sx={{
                         border: `2px solid ${premiumColors.gold}`,
                         color: premiumColors.gold,
-                        py: 2.5,
-                        px: 4,
+                        py: { xs: 1.5, sm: 2.5 }, // Reduced padding on mobile
+                        px: { xs: 3, sm: 4 },      // Reduced padding on mobile
                         borderRadius: 3,
                         fontFamily: "'Playfair Display', serif",
                         fontWeight: 800,
-                        fontSize: '1.1rem',
+                        fontSize: { xs: '0.9rem', sm: '1.1rem' }, // Smaller font on mobile
                         textTransform: 'none',
                         background: alpha(premiumColors.gold, 0.08),
                         minWidth: { xs: '100%', sm: 'auto' },
