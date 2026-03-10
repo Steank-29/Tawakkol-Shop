@@ -7,27 +7,52 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png'], // Add this
       manifest: {
-        name: 'Tawakkol Shop',
+        name: 'Tawakkol Store',
         short_name: 'Tawakkol',
-        start_url: '/login',
+        description: 'Tawakkol store', // Add description
+        theme_color: '#d4af37', // Add theme color
+        background_color: '#d4af37',
         display: 'standalone',
-        background_color: '#ffffff',
+        start_url: '/', // Changed from '/login' - start_url should be the root
+        scope: '/', // Add scope
         icons: [
           {
-            src: '../tawakkol/src/assets/tawakkol.png',
+            src: '../tawakkol/src/assets/tawakkol.png', // Fixed path - should be from public directory
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable' // Add purpose for better installability
           },
           {
-            src: '../tawakkol/src/assets/tawakkol.png',
+            src: '../tawakkol/src/assets/tawakkol.png', // Fixed path
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable' // Add purpose for better installability
           }
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024 // Increase to 4MB
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'], // Add glob patterns
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
+        runtimeCaching: [ // Add runtime caching for API calls
+          {
+            urlPattern: /^https:\/\/tawakkol-shop\.onrender\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              networkTimeoutSeconds: 10
+            }
+          }
+        ]
+      },
+      devOptions: {
+        enabled: true, // Enable PWA in development
+        type: 'module'
       }
     })
   ],
@@ -44,11 +69,12 @@ export default defineConfig({
     }
   },
   build: {
-    chunkSizeWarningLimit: 4000, // Increase warning limit to 4000kb
+    chunkSizeWarningLimit: 4000,
     rollupOptions: {
       output: {
-        // For Rolldown, we need to use a different approach
-        // Let's skip manualChunks for now and just increase the limit
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'] // Add manual chunks
+        }
       }
     }
   }
