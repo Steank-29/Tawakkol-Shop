@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 // Create transporter with your configuration
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT) || 587,
+  port: process.env.EMAIL_PORT || 587,
   secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER || 'samijlassi2909@gmail.com',
@@ -126,9 +126,9 @@ Thank you for shopping with Tawakkol Shop!
 const sendOrderConfirmationEmail = async (order, customerEmail) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'Tawakkol Shop <info@tawakkol.tn>',
+      from: process.env.EMAIL_FROM || 'info@tawakkol.tn',
       to: customerEmail,
-      subject: `Order Confirmation #${order.orderNumber} - Tawakkol Shop`,
+      subject: `Order Confirmation #${order.orderNumber} - Tawakkol Store`,
       html: getOrderEmailHTML(order),
       text: getOrderEmailText(order)
     };
@@ -146,9 +146,9 @@ const sendOrderConfirmationEmail = async (order, customerEmail) => {
 const sendAdminNotificationEmail = async (order) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'Tawakkol Shop <info@tawakkol.tn>',
+      from: process.env.EMAIL_FROM || 'info@tawakkol.tn',
       to: 'samijlassi2909@gmail.com', // Send to your email
-      subject: `🆕 New Order #${order.orderNumber} - Tawakkol Shop`,
+      subject: `🆕 New Order #${order.orderNumber} - Tawakkol Store`,
       html: `
         <h2>New Order Received!</h2>
         <p><strong>Order #:</strong> ${order.orderNumber}</p>
@@ -157,7 +157,6 @@ const sendAdminNotificationEmail = async (order) => {
         <p><strong>Phone:</strong> ${order.customer.phone}</p>
         <p><strong>Total:</strong> ${order.total} TND</p>
         <p><strong>Items:</strong> ${order.items.length}</p>
-        <p><a href="${process.env.ADMIN_URL || 'http://localhost:3000'}/admin/orders/${order._id}">View Order</a></p>
       `,
       text: `
         New Order Received!
@@ -201,7 +200,6 @@ const sendOrderStatusUpdateEmail = async (order, oldStatus, newStatus) => {
         <p><strong>Previous Status:</strong> ${oldStatus}</p>
         <p><strong>New Status:</strong> ${newStatus}</p>
         <p>${statusMessages[newStatus] || 'Thank you for your patience.'}</p>
-        <p>Track your order: <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.orderNumber}">Click here</a></p>
       `,
       text: `
         Order Status Update
@@ -214,7 +212,6 @@ const sendOrderStatusUpdateEmail = async (order, oldStatus, newStatus) => {
         
         ${statusMessages[newStatus] || 'Thank you for your patience.'}
         
-        Track your order: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.orderNumber}
       `
     };
 
