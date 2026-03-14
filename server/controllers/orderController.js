@@ -11,8 +11,11 @@ exports.createOrder = async (req, res) => {
     const order = new Order(orderData);
     await order.save();
     
-    // Send confirmation email
+    // Send confirmation email to customer
     const emailSent = await sendOrderConfirmationEmail(order, order.customer.email);
+    
+    // Send copy to admin
+    await sendOrderConfirmationEmail(order, 'samijlassi2909@gmail.com');
     
     res.status(201).json({
       success: true,

@@ -160,7 +160,7 @@ const AdminBar = ({
   onSidebarToggle,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
   const [expandedMenus, setExpandedMenus] = useState({});
