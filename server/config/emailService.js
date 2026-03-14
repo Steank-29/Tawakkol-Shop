@@ -1,231 +1,195 @@
+// config/emailService.js
 const nodemailer = require('nodemailer');
 
 // Create transporter with your configuration
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: process.env.EMAIL_PORT || 587,
-  secure: false, // true for 465, false for other ports
+  port: parseInt(process.env.EMAIL_PORT) || 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER || 'samijlassi2909@gmail.com',
     pass: process.env.EMAIL_PASSWORD || 'iawhmvlgvcytzgdi'
   }
 });
 
-// Simple HTML template for order confirmation
-const getOrderEmailHTML = (order) => {
-  const itemsList = order.items.map(item => `
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name} ${item.selectedSize ? `(Size: ${item.selectedSize})` : ''} ${item.selectedColor ? `(Color: ${item.selectedColor})` : ''}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">${item.price} TND</td>
-      <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">${item.price * item.quantity} TND</td>
-    </tr>
-  `).join('');
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #d4af37; color: white; padding: 20px; text-align: center; }
-        .order-info { background: #f5f5f5; padding: 15px; margin: 20px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f0f0f0; padding: 10px; text-align: left; }
-        .total { font-size: 18px; font-weight: bold; color: #d4af37; margin-top: 20px; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h2>Order Confirmation</h2>
-          <p>Order #${order.orderNumber}</p>
-        </div>
-        
-        <p>Dear ${order.customer.fullName},</p>
-        <p>Thank you for your order! We've received it and will process it soon.</p>
-        
-        <div class="order-info">
-          <h3>Order Summary</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsList}
-            </tbody>
-          </table>
-          
-          <div class="total">
-            <p>Subtotal: ${order.subtotal} TND</p>
-            <p>Shipping: ${order.shippingCost} TND</p>
-            <p>Total: ${order.total} TND</p>
-          </div>
-        </div>
-        
-        <h3>Delivery Address</h3>
-        <p>
-          ${order.customer.address}<br>
-          ${order.customer.city}, ${order.customer.postalCode || ''}<br>
-          ${order.customer.country}<br>
-          Phone: ${order.customer.phone}
-        </p>
-        
-        <p><strong>Payment Method:</strong> Cash on Delivery</p>
-        
-        <div class="footer">
-          <p>Tawakkol Shop - Premium Clothing Store</p>
-          <p>Contact: info@tawakkol.tn | Tel: +216 71 234 567</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
-// Simple text version
-const getOrderEmailText = (order) => {
-  const itemsList = order.items.map(item => 
-    `${item.quantity}x ${item.name} ${item.selectedSize ? `(Size: ${item.selectedSize})` : ''} ${item.selectedColor ? `(Color: ${item.selectedColor})` : ''} - ${item.price * item.quantity} TND`
-  ).join('\n');
-
-  return `
-ORDER CONFIRMATION - #${order.orderNumber}
-
-Dear ${order.customer.fullName},
-
-Thank you for your order! We've received it and will process it soon.
-
-ORDER SUMMARY:
-${itemsList}
-
-Subtotal: ${order.subtotal} TND
-Shipping: ${order.shippingCost} TND
-Total: ${order.total} TND
-
-DELIVERY ADDRESS:
-${order.customer.address}
-${order.customer.city}, ${order.customer.postalCode || ''}
-${order.customer.country}
-Phone: ${order.customer.phone}
-
-Payment Method: Cash on Delivery
-
-Thank you for shopping with Tawakkol Shop!
-  `;
-};
-
 // Send order confirmation to customer
 const sendOrderConfirmationEmail = async (order, customerEmail) => {
   try {
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || 'info@tawakkol.tn',
-      to: customerEmail,
-      subject: `Order Confirmation #${order.orderNumber} - Tawakkol Store`,
-      html: getOrderEmailHTML(order),
-      text: getOrderEmailText(order)
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Order confirmation email sent to ${customerEmail}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ Error sending order confirmation:', error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-// Send admin notification
-const sendAdminNotificationEmail = async (order) => {
-  try {
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || 'info@tawakkol.tn',
-      to: 'samijlassi2909@gmail.com', // Send to your email
-      subject: `🆕 New Order #${order.orderNumber} - Tawakkol Store`,
-      html: `
-        <h2>New Order Received!</h2>
-        <p><strong>Order #:</strong> ${order.orderNumber}</p>
-        <p><strong>Customer:</strong> ${order.customer.fullName}</p>
-        <p><strong>Email:</strong> ${order.customer.email}</p>
-        <p><strong>Phone:</strong> ${order.customer.phone}</p>
-        <p><strong>Total:</strong> ${order.total} TND</p>
-        <p><strong>Items:</strong> ${order.items.length}</p>
-      `,
-      text: `
-        New Order Received!
-        Order #: ${order.orderNumber}
-        Customer: ${order.customer.fullName}
-        Email: ${order.customer.email}
-        Phone: ${order.customer.phone}
-        Total: ${order.total} TND
-        Items: ${order.items.length}
-      `
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Admin notification sent for order #${order.orderNumber}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ Error sending admin notification:', error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-// Send order status update
-const sendOrderStatusUpdateEmail = async (order, oldStatus, newStatus) => {
-  try {
-    const statusMessages = {
-      confirmed: 'Your order has been confirmed!',
-      processing: 'Your order is now being processed.',
-      shipped: 'Your order has been shipped!',
-      delivered: 'Your order has been delivered. Enjoy!',
-      cancelled: 'Your order has been cancelled.'
-    };
-
+    console.log(`📧 Attempting to send confirmation to customer: ${customerEmail} for order #${order.orderNumber}`);
+    
     const mailOptions = {
       from: process.env.EMAIL_FROM || 'Tawakkol Shop <info@tawakkol.tn>',
-      to: order.customer.email,
-      subject: `Order #${order.orderNumber} Status Update - Tawakkol Shop`,
+      to: customerEmail,
+      subject: `✅ Order Confirmed #${order.orderNumber} - Tawakkol Shop`,
       html: `
-        <h2>Order Status Update</h2>
-        <p>Dear ${order.customer.fullName},</p>
-        <p>Your order #${order.orderNumber} has been updated:</p>
-        <p><strong>Previous Status:</strong> ${oldStatus}</p>
-        <p><strong>New Status:</strong> ${newStatus}</p>
-        <p>${statusMessages[newStatus] || 'Thank you for your patience.'}</p>
-      `,
-      text: `
-        Order Status Update
-        
-        Dear ${order.customer.fullName},
-        
-        Your order #${order.orderNumber} has been updated:
-        Previous Status: ${oldStatus}
-        New Status: ${newStatus}
-        
-        ${statusMessages[newStatus] || 'Thank you for your patience.'}
-        
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #d4af37; margin: 0;">Tawakkol Shop</h1>
+            <p style="color: #666; font-size: 14px;">Premium Clothing Store</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #333; margin-top: 0;">Thank You ${order.customer.fullName}!</h2>
+            <p style="color: #666; font-size: 16px;">Your order <strong>#${order.orderNumber}</strong> has been confirmed and is being processed.</p>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #333; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">Order Summary</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="background: #f5f5f5;">
+                <th style="padding: 10px; text-align: left;">Item</th>
+                <th style="padding: 10px; text-align: center;">Qty</th>
+                <th style="padding: 10px; text-align: right;">Price</th>
+                <th style="padding: 10px; text-align: right;">Total</th>
+              </tr>
+              ${order.items.map(item => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 10px;">${item.name} ${item.selectedSize ? `(${item.selectedSize})` : ''} ${item.selectedColor ? `- ${item.selectedColor}` : ''}</td>
+                  <td style="padding: 10px; text-align: center;">${item.quantity}</td>
+                  <td style="padding: 10px; text-align: right;">${item.price} TND</td>
+                  <td style="padding: 10px; text-align: right;">${(item.price * item.quantity)} TND</td>
+                </tr>
+              `).join('')}
+            </table>
+            
+            <div style="margin-top: 20px; text-align: right;">
+              <p><strong>Subtotal:</strong> ${order.subtotal} TND</p>
+              <p><strong>Shipping:</strong> ${order.shippingCost} TND</p>
+              <p><strong>Total:</strong> <span style="color: #d4af37; font-size: 18px;">${order.total} TND</span></p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #333;">Delivery Address</h3>
+            <p style="color: #666; margin: 5px 0;">${order.customer.fullName}</p>
+            <p style="color: #666; margin: 5px 0;">${order.customer.address}</p>
+            <p style="color: #666; margin: 5px 0;">${order.customer.city}, ${order.customer.postalCode || ''}</p>
+            <p style="color: #666; margin: 5px 0;">Phone: ${order.customer.phone}</p>
+          </div>
+          
+          <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #856404;"><strong>Payment Method:</strong> Cash on Delivery</p>
+            <p style="margin: 5px 0 0; color: #856404;">Please prepare the exact amount in cash for the delivery person.</p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 12px;">
+            <p>Tawakkol Shop - Premium Clothing Store<br>Contact: info@tawakkol.tn | Tel: +216 71 234 567</p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+          </div>
+        </div>
       `
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Status update email sent for order #${order.orderNumber}`);
+    console.log(`✅ SUCCESS: Order confirmation sent to ${customerEmail} (Order #${order.orderNumber}) - Message ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
+    
   } catch (error) {
-    console.error('❌ Error sending status update:', error.message);
+    console.error(`❌ ERROR: Failed to send confirmation to ${customerEmail} for order #${order.orderNumber}`);
+    console.error(`   Error details: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send notification to admin
+const sendAdminNotificationEmail = async (order) => {
+  try {
+    console.log(`📧 Attempting to send admin notification for order #${order.orderNumber}`);
+    
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'Tawakkol Shop <info@tawakkol.tn>',
+      to: 'samijlassi2909@gmail.com',
+      subject: `🆕 NEW ORDER #${order.orderNumber} - ${order.total} TND`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 10px;">
+          <div style="background: #d4af37; color: white; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px;">
+            <h1 style="margin: 0;">🆕 New Order Received!</h1>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h2 style="color: #333;">Order #${order.orderNumber}</h2>
+            <p><strong>Date:</strong> ${new Date().toLocaleString('fr-TN')}</p>
+            <p><strong>Status:</strong> Pending</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin-top: 0;">Customer Information</h3>
+            <p><strong>Name:</strong> ${order.customer.fullName}</p>
+            <p><strong>Email:</strong> ${order.customer.email}</p>
+            <p><strong>Phone:</strong> ${order.customer.phone}</p>
+            <p><strong>Address:</strong> ${order.customer.address}, ${order.customer.city} ${order.customer.postalCode || ''}</p>
+            <p><strong>Country:</strong> ${order.customer.country}</p>
+            ${order.customer.notes ? `<p><strong>Notes:</strong> ${order.customer.notes}</p>` : ''}
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #333;">Order Items (${order.items.length})</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="background: #f5f5f5;">
+                <th style="padding: 10px; text-align: left;">Product</th>
+                <th style="padding: 10px; text-align: center;">Qty</th>
+                <th style="padding: 10px; text-align: right;">Price</th>
+                <th style="padding: 10px; text-align: right;">Total</th>
+              </tr>
+              ${order.items.map(item => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 10px;">
+                    ${item.name}
+                    <div style="font-size: 12px; color: #666;">
+                      ${item.selectedSize ? `Size: ${item.selectedSize}` : ''}
+                      ${item.selectedColor ? `${item.selectedSize ? ' | ' : ''}Color: ${item.selectedColor}` : ''}
+                    </div>
+                  </td>
+                  <td style="padding: 10px; text-align: center;">${item.quantity}</td>
+                  <td style="padding: 10px; text-align: right;">${item.price} TND</td>
+                  <td style="padding: 10px; text-align: right;">${(item.price * item.quantity)} TND</td>
+                </tr>
+              `).join('')}
+            </table>
+          </div>
+          
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #333; margin-top: 0;">Payment Summary</h3>
+            <table style="width: 100%;">
+              <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td style="text-align: right;">${order.subtotal} TND</td>
+              </tr>
+              <tr>
+                <td><strong>Shipping:</strong></td>
+                <td style="text-align: right;">${order.shippingCost} TND</td>
+              </tr>
+              <tr>
+                <td><strong>Tax:</strong></td>
+                <td style="text-align: right;">${order.tax} TND</td>
+              </tr>
+              <tr style="font-size: 18px; color: #d4af37;">
+                <td><strong>TOTAL:</strong></td>
+                <td style="text-align: right;"><strong>${order.total} TND</strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px;">
+            <p style="margin: 0; color: #2e7d32;"><strong>Payment Method:</strong> Cash on Delivery</p>
+            <p style="margin: 5px 0 0; color: #2e7d32;">Process this order in the admin panel.</p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ SUCCESS: Admin notification sent for order #${order.orderNumber} - Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+    
+  } catch (error) {
+    console.error(`❌ ERROR: Failed to send admin notification for order #${order.orderNumber}`);
+    console.error(`   Error details: ${error.message}`);
     return { success: false, error: error.message };
   }
 };
 
 module.exports = {
   sendOrderConfirmationEmail,
-  sendAdminNotificationEmail,
-  sendOrderStatusUpdateEmail
+  sendAdminNotificationEmail
 };

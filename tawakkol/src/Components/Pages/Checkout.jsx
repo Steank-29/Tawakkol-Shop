@@ -294,50 +294,7 @@ const Checkout = () => {
   };
 
   if (cart.length === 0 && activeStep < 2) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 10 }}>
-        <Zoom in={true}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 6,
-              textAlign: 'center',
-              background: '#f8fafc',
-              border: '1px solid',
-              borderColor: palette.borderGray,
-              borderRadius: 3,
-              maxWidth: 600,
-              mx: 'auto',
-            }}
-          >
-            <ShoppingBag sx={{ fontSize: 64, color: palette.gold, mb: 3, opacity: 0.7 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: palette.noir, mb: 2 }}>
-              Votre panier est vide
-            </Typography>
-            <Typography variant="body1" sx={{ color: palette.slate, mb: 4, maxWidth: 400, mx: 'auto' }}>
-              Ajoutez des articles à votre panier avant de procéder au paiement.
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => navigate('/products')}
-              sx={{
-                background: palette.gold,
-                color: palette.noir,
-                fontWeight: 700,
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  background: palette.goldDark,
-                },
-              }}
-            >
-              <ShoppingBag sx={{ mr: 1 }} />
-              Voir les produits
-            </Button>
-          </Paper>
-        </Zoom>
-      </Container>
-    );
+   window.location="/"
   }
 
   const renderStepContent = () => {
