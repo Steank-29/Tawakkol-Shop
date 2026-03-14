@@ -1,10 +1,5 @@
 // controllers/orderController.js
 const Order = require('../models/order');
-const { 
-  sendOrderConfirmationEmail, 
-  sendAdminNotificationEmail 
-} = require('../config/emailService');
-
 
 exports.createOrder = async (req, res) => {
   try {
@@ -13,14 +8,6 @@ exports.createOrder = async (req, res) => {
     // Create new order
     const order = new Order(orderData);
     await order.save();
-    
-    // Send confirmation email to customer (don't await - let it run in background)
-    sendOrderConfirmationEmail(order, order.customer.email)
-      .catch(err => console.log('Customer email error:', err));
-    
-    // Send notification to admin (don't await - let it run in background)
-    sendAdminNotificationEmail(order)
-      .catch(err => console.log('Admin email error:', err));
     
     res.status(201).json({
       success: true,

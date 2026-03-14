@@ -19,23 +19,13 @@ const religiousProducts = [
       _id: "69a7ce83c011ed562ea5fc1b"
     },
     {
-      name: "Marron",
-      value: "#8B4513",
-      _id: "69a7ce83c011ed562ea5fc1c"
-    },
-    {
       name: "Bordeaux",
       value: "#800020",
       _id: "69a7ce83c011ed562ea5fc1d"
     },
     {
-      name: "Vert Forêt",
-      value: "#228B22",
-      _id: "69a7ce83c011ed562ea5fc1e"
-    },
-    {
       name: "Or",
-      value: "#D4AF37",
+      value: "#dbc889",
       _id: "69a7ce83c011ed562ea5fc1f"
     },
     {
