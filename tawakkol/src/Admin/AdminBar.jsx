@@ -66,12 +66,13 @@ const drawerWidth = 280;
 
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'sidebarOpen',
-})(({ sidebarOpen }) => ({
+})(({ sidebarOpen, theme }) => ({
   backgroundColor: COLORS.noir,
   color: COLORS.white,
   borderBottom: `1px solid ${alpha('#fff', 0.08)}`,
   transition: '0.3s',
-  ...(sidebarOpen && {
+  // Only apply marginLeft on desktop when sidebar is open
+  ...(sidebarOpen && !useMediaQuery(theme.breakpoints.down('sm')) && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
   }),
@@ -194,11 +195,17 @@ const AdminBar = ({
     setActivePath(window.location.pathname);
   }, [navigate]);
 
-  useEffect(() => {
-    if (isMobile && sidebarOpen) {
-      onSidebarToggle();
+  // Remove the problematic useEffect that auto-closes the sidebar on mobile
+  // Instead, we'll handle mobile behavior differently
+
+  // Close drawer when navigating on mobile
+  const handleNavigation = (path) => {
+    setActivePath(path);
+    navigate(path);
+    if (isMobile) {
+      onSidebarToggle(); // Close drawer on mobile after navigation
     }
-  }, [isMobile, sidebarOpen, onSidebarToggle]);
+  };
 
   /* ================= DATA ================= */
 
@@ -288,14 +295,15 @@ const AdminBar = ({
   const goTo = (path) => {
     setActivePath(path);
     navigate(path);
-    if (isMobile && sidebarOpen) {
-      onSidebarToggle();
+    if (isMobile) {
+      onSidebarToggle(); // Close drawer on mobile after navigation
     }
   };
 
   const handleLogout = () => {
     logout();
     setProfileAnchor(null);
+    navigate('/login');
   };
 
   const handleSearch = (e) => {
@@ -360,6 +368,20 @@ const AdminBar = ({
           </Box>
         </Box>
         {!isMobile && (
+          <IconButton 
+            onClick={onSidebarToggle}
+            sx={{ 
+              color: COLORS.gold,
+              '&:hover': {
+                backgroundColor: alpha(COLORS.gold, 0.1),
+              }
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
+        {/* Add close button for mobile */}
+        {isMobile && (
           <IconButton 
             onClick={onSidebarToggle}
             sx={{ 
@@ -613,7 +635,7 @@ const AdminBar = ({
 
   return (
     <>
-      <StyledAppBar position="fixed" sidebarOpen={sidebarOpen}>
+      <StyledAppBar position="fixed" sidebarOpen={sidebarOpen} theme={theme}>
         <Toolbar sx={{ 
           justifyContent: 'space-between',
           minHeight: { xs: 56, sm: 64 },
@@ -785,7 +807,7 @@ const AdminBar = ({
       {/* NOTIFICATIONS MENU */}
       <Menu 
         anchorEl={notifAnchor} 
-        open={!!notifAnchor} 
+        open={Boolean(notifAnchor)} 
         onClose={() => setNotifAnchor(null)}
         anchorOrigin={{
           vertical: 'bottom',
@@ -847,7 +869,7 @@ const AdminBar = ({
       {/* MESSAGES MENU */}
       <Menu 
         anchorEl={mailAnchor} 
-        open={!!mailAnchor} 
+        open={Boolean(mailAnchor)} 
         onClose={() => setMailAnchor(null)}
         anchorOrigin={{
           vertical: 'bottom',
@@ -909,7 +931,7 @@ const AdminBar = ({
       {/* PROFILE MENU */}
       <Menu 
         anchorEl={profileAnchor} 
-        open={!!profileAnchor} 
+        open={Boolean(profileAnchor)} 
         onClose={() => setProfileAnchor(null)}
         anchorOrigin={{
           vertical: 'bottom',
