@@ -617,7 +617,7 @@ const Checkout = () => {
                         • Préparez le montant exact en espèces pour faciliter la transaction.<br />
                         • Le livreur vous présentera la commande avant paiement.<br />
                         • Vous recevrez un reçu officiel après paiement.<br />
-                        • Pour toute question, contactez-nous au 71 234 567.
+                        • Pour toute question, contactez-nous au 29 442 957.
                       </Typography>
                     </Box>
                   </Alert>

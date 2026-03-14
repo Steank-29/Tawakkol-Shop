@@ -665,20 +665,22 @@ const categories = [
     setMobileCategoriesOpen(false);
   };
 
-  const handleNavLinkClick = (link) => {
-    if (link.disabled) return; // Don't do anything if disabled
-    if (link.hasMenu) {
-      if (window.innerWidth < 960) {
-        handleMobileCategoriesToggle();
-      } else {
-        handleCategoriesToggle();
-      }
+const handleNavLinkClick = (link) => {
+  if (link.disabled) return; // Don't do anything if disabled
+  if (link.hasMenu) {
+    if (window.innerWidth < 960) {
+      handleMobileCategoriesToggle();
     } else {
-      navigate(link.path);
-      setCategoriesOpen(false);
-      setMobileOpen(false);
+      handleCategoriesToggle();
     }
-  };
+  } else {
+    navigate(link.path);
+    // Close all menus
+    setCategoriesOpen(false);
+    setMobileOpen(false);
+    setMobileCategoriesOpen(false); // Add this line to close mobile categories menu
+  }
+};
 
   const handleLogoClick = () => {
     navigate('/');
