@@ -213,7 +213,7 @@ const AdminBar = ({
     { 
       title: 'Dashboard', 
       icon: <Dashboard />, 
-      path: '/Admin-Panel/Dashboard',
+      path: '/Admin-Panel/Manage-Products',
       roles: ['admin', 'super-admin']
     },
     {
@@ -257,13 +257,13 @@ const AdminBar = ({
     { 
       title: 'Mes affaires', 
       icon: <Receipt />, 
-      path: '/Admin-Panel/Trace',
+      path: '/Admin-Panel/Orders',
       roles: ['super-admin'] // Only super-admin can see reports
     },
     { 
       title: 'Paramètres', 
       icon: <Settings />, 
-      path: '/Admin-Panel/Settings',
+      path: '/Admin-Panel/Orders',
       roles: ['super-admin'] // Only super-admin can see settings
     },
   ];
