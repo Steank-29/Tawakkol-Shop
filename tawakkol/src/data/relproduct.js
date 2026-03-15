@@ -24,8 +24,8 @@ const religiousProducts = [
       _id: "69a7ce83c011ed562ea5fc1d"
     },
     {
-      name: "Or",
-      value: "#dbc889",
+      name: "Blue",
+      value: "#a2def1",
       _id: "69a7ce83c011ed562ea5fc1f"
     },
     {
@@ -36,16 +36,34 @@ const religiousProducts = [
   ],
   mainImage: {
     public_id: "tawakkol/religious/qamiss-tawakkol-1772605057453-28345049",
-    url: "https://res.cloudinary.com/dkr41arie/image/upload/v1772605058/tawakkol/religious/qamiss-tawakkol-1772605057453-28345049.jpg",
+    url: "https://res.cloudinary.com/dkr41arie/image/upload/v1773593093/img5_okzyls.png",
     storage: "cloudinary"
   },
   additionalImages: [
     {
       public_id: "tawakkol/religious/qamiss-tawakkol-1772605057475-718263040",
-      url: "https://res.cloudinary.com/dkr41arie/image/upload/v1772605058/tawakkol/religious/qamiss-tawakkol-1772605057475-718263040.jpg",
+      url: "https://res.cloudinary.com/dkr41arie/image/upload/v1773593089/img1_dq6y3u.png",
       storage: "cloudinary",
       _id: "69a7ce83c011ed562ea5fc20"
-    }
+    },
+    {
+      public_id: "tawakkol/religious/qamiss-tawakkol-front-1772605057476-123456789",
+      url: "https://res.cloudinary.com/dkr41arie/image/upload/v1773593092/img2_w1lbob.png",
+      storage: "cloudinary",
+      _id: "69a7ce83c011ed562ea5fc21"
+    },
+    {
+      public_id: "tawakkol/religious/qamiss-tawakkol-back-1772605057477-234567890",
+      url: "https://res.cloudinary.com/dkr41arie/image/upload/v1773593088/img3_q5f3wa.png",
+      storage: "cloudinary",
+      _id: "69a7ce83c011ed562ea5fc22"
+    },
+    {
+      public_id: "tawakkol/religious/qamiss-tawakkol-side-1772605057478-345678901",
+      url: "https://res.cloudinary.com/dkr41arie/image/upload/v1773593095/img4_undsza.png",
+      storage: "cloudinary",
+      _id: "69a7ce83c011ed562ea5fc23"
+    },
   ],
   stock: 250,
   isActive: true,

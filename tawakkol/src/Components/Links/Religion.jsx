@@ -27,7 +27,8 @@ import {
   useMediaQuery,
   Rating,
   alpha,
-  styled
+  styled,
+  MobileStepper
 } from '@mui/material';
 import {
   Close,
@@ -50,6 +51,16 @@ import {
   Security,
   AssignmentReturn,
   CurrencyExchange,
+  PlayArrow,
+  Pause,
+  VolumeUp,
+  VolumeOff,
+  Fullscreen,
+  FullscreenExit,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
+  Image,
+  VideoLibrary
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
@@ -167,11 +178,11 @@ const BackgroundPattern = styled(Box)({
   },
 });
 
-// Product Card - Now with row layout (image left, content right)
+// Product Card
 const ProductCard = styled(Card)({
   width: '100%',
   display: 'flex',
-  flexDirection: 'row', // Row layout for image left, content right
+  flexDirection: 'row',
   backgroundColor: palette.white,
   borderRadius: 16,
   overflow: 'hidden',
@@ -185,9 +196,9 @@ const ProductCard = styled(Card)({
   },
 });
 
-// Left side container for image (33% width)
+// Left side container for image
 const ProductImageContainer = styled(Box)({
-  width: '33%', // Takes 33% of card width
+  width: '33%',
   height: '100%',
   position: 'relative',
   overflow: 'hidden',
@@ -198,7 +209,7 @@ const ProductImageContainer = styled(Box)({
 });
 
 const ProductImage = styled('img')({
-  width: 'calc(100% - 20px)', // 10px margin left + 10px margin right
+  width: 'calc(100% - 20px)',
   height: 'calc(100% - 20px)',
   marginLeft: '10px',
   marginRight: '10px',
@@ -305,6 +316,283 @@ const ContentWrapper = styled(Box)({
   border: `1px solid ${alpha(palette.gold, 0.2)}`,
 });
 
+// ==================== NEW VIDEO PLAYER COMPONENT ====================
+const VideoPlayer = ({ src, onClose }) => {
+  const [playing, setPlaying] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (playing) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [playing]);
+
+  const togglePlay = () => setPlaying(!playing);
+  const toggleMute = () => setMuted(!muted);
+  
+  const toggleFullscreen = () => {
+    if (!fullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+    setFullscreen(!fullscreen);
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  return (
+    <Box
+      ref={containerRef}
+      sx={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        minHeight: 300,
+        backgroundColor: palette.noir,
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        loop
+        muted={muted}
+        playsInline
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+        }}
+      />
+      
+      {/* Video Controls */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: `linear-gradient(to top, ${alpha(palette.noir, 0.8)}, transparent)`,
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          opacity: 0,
+          transition: 'opacity 0.3s ease',
+          '&:hover': {
+            opacity: 1,
+          },
+        }}
+      >
+        <IconButton onClick={togglePlay} sx={{ color: palette.white }}>
+          {playing ? <Pause /> : <PlayArrow />}
+        </IconButton>
+        
+        <IconButton onClick={toggleMute} sx={{ color: palette.white }}>
+          {muted ? <VolumeOff /> : <VolumeUp />}
+        </IconButton>
+        
+        <IconButton onClick={toggleFullscreen} sx={{ color: palette.white }}>
+          {fullscreen ? <FullscreenExit /> : <Fullscreen />}
+        </IconButton>
+        
+        {onClose && (
+          <IconButton onClick={onClose} sx={{ color: palette.white, ml: 'auto' }}>
+            <Close />
+          </IconButton>
+        )}
+      </Box>
+      
+      {/* Video Badge */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          background: alpha(palette.gold, 0.9),
+          color: palette.white,
+          px: 1.5,
+          py: 0.5,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          fontSize: '0.75rem',
+          fontWeight: 700,
+        }}
+      >
+        <VideoLibrary sx={{ fontSize: 16 }} />
+        VIDÉO
+      </Box>
+    </Box>
+  );
+};
+
+// ==================== MEDIA SLIDER COMPONENT ====================
+const MediaSlider = ({ media, initialIndex = 0, onClose }) => {
+  const [activeStep, setActiveStep] = useState(initialIndex);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  const handleNext = () => {
+    setActiveStep((prevStep) => (prevStep + 1) % media.length);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevStep) => (prevStep - 1 + media.length) % media.length);
+  };
+
+  const currentMedia = media[activeStep];
+
+  return (
+    <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Media Display */}
+      <Box sx={{ height: 400, bgcolor: palette.noir, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {currentMedia.type === 'video' ? (
+          <VideoPlayer src={currentMedia.url} />
+        ) : (
+          <motion.img
+            key={activeStep}
+            src={currentMedia.url}
+            alt={`Media ${activeStep + 1}`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Media Type Indicator */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          left: 16,
+          background: alpha(palette.gold, 0.9),
+          color: palette.white,
+          px: 1.5,
+          py: 0.5,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          fontSize: '0.75rem',
+          fontWeight: 700,
+        }}
+      >
+        {currentMedia.type === 'video' ? (
+          <VideoLibrary sx={{ fontSize: 16 }} />
+        ) : (
+          <Image sx={{ fontSize: 16 }} />
+        )}
+        {currentMedia.type === 'video' ? 'VIDÉO' : `IMAGE ${activeStep + 1}/${media.length}`}
+      </Box>
+
+      {/* Navigation Arrows */}
+      {media.length > 1 && (
+        <>
+          <IconButton
+            onClick={handleBack}
+            sx={{
+              position: 'absolute',
+              left: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              bgcolor: alpha(palette.white, 0.8),
+              '&:hover': { bgcolor: palette.white },
+              zIndex: 2,
+            }}
+          >
+            <KeyboardArrowLeft />
+          </IconButton>
+          <IconButton
+            onClick={handleNext}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              bgcolor: alpha(palette.white, 0.8),
+              '&:hover': { bgcolor: palette.white },
+              zIndex: 2,
+            }}
+          >
+            <KeyboardArrowRight />
+          </IconButton>
+        </>
+      )}
+
+      {/* Thumbnails */}
+      {media.length > 1 && (
+        <Box sx={{ mt: 2, display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
+          {media.map((item, index) => (
+            <Box
+              key={index}
+              onClick={() => setActiveStep(index)}
+              sx={{
+                flexShrink: 0,
+                width: 60,
+                height: 60,
+                borderRadius: 1,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                border: `3px solid ${activeStep === index ? palette.gold : 'transparent'}`,
+                opacity: activeStep === index ? 1 : 0.6,
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+            >
+              {item.type === 'video' ? (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    bgcolor: palette.noir,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <VideoLibrary sx={{ color: palette.gold, fontSize: 24 }} />
+                </Box>
+              ) : (
+                <img
+                  src={item.url}
+                  alt={`Thumbnail ${index + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              )}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 // ==================== SKELETON LOADER ====================
 const ProductCardSkeleton = () => (
   <ProductCard sx={{ height: '45vh', width: '600px' }}>
@@ -401,7 +689,7 @@ const Religion = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -443,10 +731,48 @@ const Religion = () => {
     return { label: 'Disponible', color: palette.success };
   };
 
+  // ==================== MEDIA HANDLING ====================
+  const getProductMedia = (product) => {
+    const media = [];
+    
+    // Add main image
+    if (product.mainImage?.url) {
+      media.push({
+        type: 'image',
+        url: product.mainImage.url,
+        id: 'main'
+      });
+    }
+    
+    // Add additional images
+    if (product.additionalImages?.length > 0) {
+      product.additionalImages.forEach((img, index) => {
+        if (img?.url) {
+          media.push({
+            type: 'image',
+            url: img.url,
+            id: `additional-${index}`
+          });
+        }
+      });
+    }
+    
+    // Add video if available (you can add a video property to your product data)
+    if (product.videoUrl) {
+      media.push({
+        type: 'video',
+        url: product.videoUrl,
+        id: 'video'
+      });
+    }
+    
+    return media;
+  };
+
   // ==================== PRODUCT HANDLERS ====================
   const handleProductClick = (product) => {
     setSelectedProduct(product);
-    setSelectedImage(0);
+    setSelectedMediaIndex(0);
     setSelectedSize(product.sizes?.[0] || '');
     setSelectedColor(product.colors?.[0] || null);
     setQuantity(1);
@@ -523,13 +849,6 @@ const Religion = () => {
     );
   };
 
-  const getProductImages = (product) => {
-    const images = [product.mainImage, ...(product.additionalImages || [])]
-      .filter(img => img?.url)
-      .map(img => img.url);
-    return images.length > 0 ? images : ['/placeholder-product.jpg'];
-  };
-
   // ==================== RENDER FUNCTIONS ====================
 const renderProductGrid = () => {
   if (loading) {
@@ -596,22 +915,22 @@ const renderProductGrid = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 whileHover={{ scale: 1.02 }}
               >
-                {/* Product Card - Main component with new layout */}
+                {/* Product Card */}
 <ProductCard 
   onClick={() => handleProductClick(product)}
   sx={{
-    height: { xs: 'auto', md: '60vh' }, // Auto height on mobile, fixed on desktop
-    width: { xs: '100%', md: '1200px' }, // Full width on mobile, fixed on desktop
+    height: { xs: 'auto', md: '60vh' },
+    width: { xs: '100%', md: '1200px' },
     display: 'flex',
-    flexDirection: { xs: 'column', md: 'row' }, // Stack on mobile, row on desktop
-    maxWidth: '100%', // Prevent overflow
+    flexDirection: { xs: 'column', md: 'row' },
+    maxWidth: '100%',
     overflow: 'hidden',
   }}
 >
-  {/* LEFT SIDE - IMAGE - Full width on mobile, 33% on desktop */}
+  {/* LEFT SIDE - IMAGE */}
   <ProductImageContainer sx={{ 
     width: { xs: '100%', md: '33%' },
-    height: { xs: '300px', md: '100%' }, // Fixed height on mobile
+    height: { xs: '300px', md: '100%' },
     position: 'relative',
   }}>
     <ProductImage 
@@ -624,6 +943,31 @@ const renderProductGrid = () => {
       }}
     />
     
+    {/* Video Badge - Show if product has video */}
+    {product.videoUrl && (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          background: alpha(palette.gold, 0.9),
+          color: palette.white,
+          px: 1,
+          py: 0.5,
+          borderRadius: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          zIndex: 2,
+        }}
+      >
+        <VideoLibrary sx={{ fontSize: 14 }} />
+        VIDÉO
+      </Box>
+    )}
+    
     <QuickViewOverlay>
       <ZoomIn sx={{ color: palette.goldLight, fontSize: { xs: 32, md: 48 } }} />
     </QuickViewOverlay>
@@ -632,7 +976,7 @@ const renderProductGrid = () => {
     <Box sx={{ 
       position: 'absolute', 
       top: 12, 
-      left: 12, 
+      right: 12, 
       display: 'flex', 
       gap: 1,
       flexWrap: 'wrap',
@@ -656,7 +1000,7 @@ const renderProductGrid = () => {
       onClick={(e) => toggleFavorite(product._id, e)}
       sx={{
         position: 'absolute',
-        top: 12,
+        bottom: 12,
         right: 12,
         bgcolor: alpha(palette.white, 0.9),
         backdropFilter: 'blur(4px)',
@@ -673,16 +1017,16 @@ const renderProductGrid = () => {
     </IconButton>
   </ProductImageContainer>
 
-  {/* RIGHT SIDE - CONTENT - Full width on mobile, 67% on desktop */}
+  {/* RIGHT SIDE - CONTENT */}
   <CardContent sx={{ 
     width: { xs: '100%', md: '67%' },
     height: { xs: 'auto', md: '100%' },
-    p: { xs: 2, sm: 3 }, // Responsive padding
+    p: { xs: 2, sm: 3 },
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
   }}>
-    {/* Product Title - Responsive font size */}
+    {/* Product Title */}
     <Typography
       variant="h5"
       sx={{
@@ -696,7 +1040,7 @@ const renderProductGrid = () => {
       {product.name}
     </Typography>
 
-    {/* Product Description - Show less on mobile */}
+    {/* Product Description */}
     <Typography
       variant="body1"
       sx={{
@@ -704,14 +1048,14 @@ const renderProductGrid = () => {
         fontSize: { xs: '0.9rem', md: '1rem' },
         overflow: 'hidden',
         display: '-webkit-box',
-        WebkitLineClamp: { xs: 2, md: 3 }, // Limit lines on mobile
+        WebkitLineClamp: { xs: 2, md: 3 },
         WebkitBoxOrient: 'vertical',
       }}
     >
       {product.description}
     </Typography>
 
-    {/* Sizes Section - Only show if sizes exist */}
+    {/* Sizes Section */}
     {product.sizes?.length > 0 && (
       <Box sx={{ mb: { xs: 1.5, md: 2.5 } }}>
         <Typography 
@@ -728,7 +1072,7 @@ const renderProductGrid = () => {
           Tailles disponibles
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          {product.sizes.slice(0, 4).map((size) => ( // Limit to 4 on mobile
+          {product.sizes.slice(0, 4).map((size) => (
             <Chip
               key={size}
               label={size}
@@ -754,7 +1098,7 @@ const renderProductGrid = () => {
       </Box>
     )}
 
-    {/* Colors Section - Only show if colors exist */}
+    {/* Colors Section */}
     {product.colors?.length > 0 && (
       <Box sx={{ mb: { xs: 1.5, md: 2.5 } }}>
         <Typography 
@@ -771,7 +1115,7 @@ const renderProductGrid = () => {
           Couleurs disponibles
         </Typography>
         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-          {product.colors.slice(0, 5).map((color) => ( // Limit to 5 on mobile
+          {product.colors.slice(0, 5).map((color) => (
             <Tooltip key={color.name} title={color.name} arrow>
               <Box
                 sx={{
@@ -800,34 +1144,34 @@ const renderProductGrid = () => {
       </Box>
     )}
 
-    {/* Variants Summary - Hide on mobile to save space */}
-    {product.sizes?.length > 0 && product.colors?.length > 0 && (
+    {/* Media Count Indicator */}
+    {getProductMedia(product).length > 1 && (
       <Box sx={{ 
-        display: { xs: 'none', md: 'flex' }, // Hide on mobile
+        display: 'flex', 
         alignItems: 'center', 
-        gap: 2, 
-        mt: 2,
-        p: 1.5,
+        gap: 1, 
+        mt: 1,
+        p: 1,
         bgcolor: alpha(palette.gold, 0.05),
-        borderRadius: 2,
-        border: `1px solid ${alpha(palette.gold, 0.1)}`,
+        borderRadius: 1,
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Straighten sx={{ fontSize: 18, color: palette.gold }} />
-          <Typography variant="caption" sx={{ color: palette.gray, fontWeight: 600 }}>
-            {product.sizes.length} tailles
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <ColorLens sx={{ fontSize: 18, color: palette.gold }} />
-          <Typography variant="caption" sx={{ color: palette.gray, fontWeight: 600 }}>
-            {product.colors.length} couleurs
-          </Typography>
-        </Box>
+        <Image sx={{ fontSize: 16, color: palette.gold }} />
+        <Typography variant="caption" sx={{ color: palette.gray, fontWeight: 600 }}>
+          {getProductMedia(product).filter(m => m.type === 'image').length} images
+        </Typography>
+        {product.videoUrl && (
+          <>
+            <Box sx={{ width: 1, height: 12, bgcolor: alpha(palette.gold, 0.2), mx: 1 }} />
+            <VideoLibrary sx={{ fontSize: 16, color: palette.gold }} />
+            <Typography variant="caption" sx={{ color: palette.gray, fontWeight: 600 }}>
+              1 vidéo
+            </Typography>
+          </>
+        )}
       </Box>
     )}
 
-    {/* Spacer to push price and button to bottom */}
+    {/* Spacer */}
     <Box sx={{ flexGrow: 1 }} />
 
     {/* Price and Quick Add Button */}
@@ -839,7 +1183,7 @@ const renderProductGrid = () => {
       pt: { xs: 1.5, md: 2 },
       borderTop: `2px solid ${alpha(palette.gold, 0.2)}`,
     }}>
-      {/* Price - Responsive font size */}
+      {/* Price */}
       <Box>
         <Typography 
           variant="caption" 
@@ -869,7 +1213,7 @@ const renderProductGrid = () => {
         </Typography>
       </Box>
       
-      {/* Quick Add Button - Smaller on mobile */}
+      {/* Quick Add Button */}
       <Tooltip title="Ajout rapide" arrow>
         <IconButton
           onClick={(e) => handleQuickAdd(product, e)}
@@ -926,24 +1270,28 @@ const renderProductGrid = () => {
   );
 };
 
-const renderProductDialog = () => (
-  <Dialog
-    open={!!selectedProduct}
-    onClose={() => setSelectedProduct(null)}
-    maxWidth="lg"
-    fullWidth
-    TransitionComponent={Zoom}
-    PaperProps={{
-      sx: {
-        borderRadius: 4,
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        bgcolor: palette.white,
-        border: `2px solid ${alpha(palette.gold, 0.3)}`,
-      },
-    }}
-  >
-    {selectedProduct && (
+const renderProductDialog = () => {
+  if (!selectedProduct) return null;
+  
+  const media = getProductMedia(selectedProduct);
+  
+  return (
+    <Dialog
+      open={!!selectedProduct}
+      onClose={() => setSelectedProduct(null)}
+      maxWidth="lg"
+      fullWidth
+      TransitionComponent={Zoom}
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          bgcolor: palette.white,
+          border: `2px solid ${alpha(palette.gold, 0.3)}`,
+        },
+      }}
+    >
       <>
         <IconButton
           onClick={() => setSelectedProduct(null)}
@@ -963,6 +1311,18 @@ const renderProductDialog = () => (
 
         <DialogContent sx={{ p: 0 }}>
           <Grid container>
+            {/* Media Section - Left Side */}
+            <Grid item xs={12} md={6} sx={{ bgcolor: palette.lightGray }}>
+              <Box sx={{ p: 4 }}>
+                <MediaSlider 
+                  media={media} 
+                  initialIndex={selectedMediaIndex}
+                  onClose={() => setSelectedProduct(null)}
+                />
+              </Box>
+            </Grid>
+
+            {/* Product Info Section - Right Side */}
             <Grid item xs={12} md={6}>
               <Box sx={{ p: 4, height: '100%', overflowY: 'auto' }}>
                 <Typography variant="h4" sx={{ 
@@ -1245,68 +1605,12 @@ const renderProductDialog = () => (
                 </Grid>
               </Box>
             </Grid>
-
-            <Grid item xs={12} md={6} sx={{ bgcolor: palette.lightGray }}>
-              <Box sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ 
-                  flex: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  mb: 3,
-                  position: 'relative',
-                }}>
-                  <motion.img
-                    key={selectedImage}
-                    src={getProductImages(selectedProduct)[selectedImage]}
-                    alt={selectedProduct.name}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    style={{
-                      width: '100%',
-                      maxHeight: 400,
-                      objectFit: 'contain',
-                    }}
-                  />
-                </Box>
-
-                {getProductImages(selectedProduct).length > 1 && (
-                  <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
-                    {getProductImages(selectedProduct).map((img, idx) => (
-                      <motion.div
-                        key={idx}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Box
-                          onClick={() => setSelectedImage(idx)}
-                          sx={{
-                            flexShrink: 0,
-                            width: 80,
-                            height: 80,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            border: `3px solid ${selectedImage === idx ? palette.gold : 'transparent'}`,
-                            opacity: selectedImage === idx ? 1 : 0.6,
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </Box>
-                      </motion.div>
-                    ))}
-                  </Stack>
-                )}
-              </Box>
-            </Grid>
           </Grid>
         </DialogContent>
       </>
-    )}
-  </Dialog>
-);
+    </Dialog>
+  );
+};
 
   return (
     <>

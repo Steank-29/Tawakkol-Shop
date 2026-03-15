@@ -19,17 +19,23 @@ import {
   VolumeUp,
   VolumeOff,
   ShoppingBag,
-  Diamond,
   ArrowForward,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
+import { useNavigate } from 'react-router-dom';
 import HomeV from '../../assets/Home_video.mp4';
 import casual from '../../assets/slider/casual.jpg';
 import official from '../../assets/slider/official.jpg';
 import sport from '../../assets/slider/sport.jpg';
 import religious from '../../assets/slider/religious.jpg';
+
+// Import real product images (adjust these paths to your actual images)
+import sportPants from '../../assets/home/coming.jpg';
+import tshirtSport from '../../assets/home/coming.jpg';
+import shortKnee from '../../assets/home/img1.png';
+import hoodieSport from '../../assets/home/coming.jpg';
 
 // === PALETTE DE COULEURS PREMIUM ===
 const premiumColors = {
@@ -49,13 +55,102 @@ const Home = () => {
   const videoRef = useRef(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
 
-  // Images for carousel
+  // Images for carousel with links and status
   const carouselImages = [
-    { src: casual, title: 'Style Décontracté', subtitle: 'Élégance au quotidien' },
-    { src: official, title: 'Tenue Officielle', subtitle: 'Sophistication et prestige' },
-    { src: sport, title: 'Sport & Performance', subtitle: 'Performance et style' },
-    { src: religious, title: 'Spiritualité', subtitle: 'Élégance sacrée' }
+    { 
+      src: casual, 
+      title: 'Style Décontracté', 
+      subtitle: 'Élégance au quotidien',
+      path: '/',
+      status: 'coming-soon' // 'available' or 'coming-soon'
+    },
+    { 
+      src: official, 
+      title: 'Tenue Officielle', 
+      subtitle: 'Sophistication et prestige',
+      path: '/',
+      status: 'coming-soon'
+    },
+    { 
+      src: sport, 
+      title: 'Sport & Performance', 
+      subtitle: 'Performance et style',
+      path: '/catalog',
+      status: 'available'
+    },
+    { 
+      src: religious, 
+      title: 'Spiritualité', 
+      subtitle: 'Élégance sacrée',
+      path: '/religion',
+      status: 'available'
+    }
+  ];
+
+  // Products with real images and paths
+  const products = [
+    {
+      id: 1,
+      name: 'SPORT PANTS',
+      category: 'Sport',
+      price: '60 TND',
+      oldPrice: '75 TND',
+      discount: '-29%',
+      rating: 4.9,
+      reviews: 89,
+      image: sportPants,
+      badge: 'Hiver 2024',
+      winterTag: 'Chaleur Extrême',
+      path: '/',
+      status: 'coming-soon'
+    },
+    {
+      id: 2,
+      name: 'T-SHIRT SPORT',
+      category: 'Sport',
+      price: '40 TND',
+      oldPrice: '',
+      discount: '',
+      rating: 5.0,
+      reviews: 42,
+      image: tshirtSport,
+      badge: 'Édition Limitée',
+      winterTag: 'Résistant au Gel',
+      path: '/',
+      status: 'coming-soon'
+    },
+    {
+      id: 3,
+      name: "SHORT COVER's KNEE",
+      category: 'Sport',
+      price: '50 TND',
+      oldPrice: '70 TND',
+      discount: '-16%',
+      rating: 4.8,
+      reviews: 156,
+      image: shortKnee,
+      badge: 'Best Seller',
+      winterTag: 'Inspiré des Glaciers',
+      path: '/religion',
+      status: 'available'
+    },
+    {
+      id: 4,
+      name: 'HOODIE TAWAKKOL SPORT',
+      category: 'Streetwear',
+      price: '50 TND',
+      oldPrice: '',
+      discount: '',
+      rating: 4.7,
+      reviews: 73,
+      image: hoodieSport,
+      badge: 'Nouvelle Collection',
+      winterTag: 'Confort Arctique',
+      path: '/',
+      status: 'coming-soon'
+    }
   ];
 
   // Carousel configuration
@@ -98,11 +193,20 @@ const Home = () => {
     });
   };
 
+  const handleCarouselClick = (path, status) => {
+    if (status === 'available') {
+      navigate(path);
+    }
+  };
+
+  const handleProductClick = (path, status) => {
+    if (status === 'available') {
+      navigate(path);
+    }
+  };
+
   return (
     <Box sx={{ width: '99vw', background: premiumColors.darkGradient }}>
-      {/* === CAROUSEL SECTION === */}
-
-
       {/* === HÉRO AVEC VIDÉO PLEINE LARGEUR === */}
       <Box sx={{ 
         position: 'relative', 
@@ -151,7 +255,6 @@ const Home = () => {
               <Fade in timeout={1200}>
                 <Box>
                   <Chip
-                    icon={<Diamond sx={{ fontSize: 18 }} />}
                     label="Marketplace de Luxe"
                     sx={{
                       background: premiumColors.premiumGradient,
@@ -218,12 +321,12 @@ const Home = () => {
                       sx={{
                         background: premiumColors.premiumGradient,
                         color: premiumColors.noir,
-                        py: { xs: 1.5, sm: 2.5 }, // Reduced padding on mobile
-                        px: { xs: 3, sm: 5 },      // Reduced padding on mobile
+                        py: { xs: 1.5, sm: 2.5 },
+                        px: { xs: 3, sm: 5 },
                         borderRadius: 3,
                         fontFamily: "'Playfair Display', serif",
                         fontWeight: 800,
-                        fontSize: { xs: '0.9rem', sm: '1.1rem' }, // Smaller font on mobile
+                        fontSize: { xs: '0.9rem', sm: '1.1rem' },
                         textTransform: 'none',
                         boxShadow: `0 15px 40px ${premiumColors.gold}40`,
                         minWidth: { xs: '100%', sm: 'auto' },
@@ -245,12 +348,12 @@ const Home = () => {
                       sx={{
                         border: `2px solid ${premiumColors.gold}`,
                         color: premiumColors.gold,
-                        py: { xs: 1.5, sm: 2.5 }, // Reduced padding on mobile
-                        px: { xs: 3, sm: 4 },      // Reduced padding on mobile
+                        py: { xs: 1.5, sm: 2.5 },
+                        px: { xs: 3, sm: 4 },
                         borderRadius: 3,
                         fontFamily: "'Playfair Display', serif",
                         fontWeight: 800,
-                        fontSize: { xs: '0.9rem', sm: '1.1rem' }, // Smaller font on mobile
+                        fontSize: { xs: '0.9rem', sm: '1.1rem' },
                         textTransform: 'none',
                         background: alpha(premiumColors.gold, 0.08),
                         minWidth: { xs: '100%', sm: 'auto' },
@@ -322,7 +425,7 @@ const Home = () => {
         </Box>
       </Box>
 
-            <Box sx={{ 
+      <Box sx={{ 
         position: 'relative', 
         width: '99.5vw',
         left: '50%', 
@@ -408,6 +511,8 @@ const Home = () => {
                   key={index}
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300 }}
+                  onClick={() => handleCarouselClick(item.path, item.status)}
+                  style={{ cursor: item.status === 'available' ? 'pointer' : 'default' }}
                 >
                   <Box
                     sx={{
@@ -429,7 +534,8 @@ const Home = () => {
                           opacity: 1
                         }
                       },
-                      transition: 'all 0.4s ease-in-out'
+                      transition: 'all 0.4s ease-in-out',
+                      opacity: item.status === 'coming-soon' ? 0.8 : 1,
                     }}
                   >
                     <img
@@ -439,9 +545,33 @@ const Home = () => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        display: 'block'
+                        display: 'block',
+                        filter: item.status === 'coming-soon' ? 'blur(2px)' : 'none'
                       }}
                     />
+                    
+                    {/* Status Badge */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 16,
+                        right: 16,
+                        zIndex: 3,
+                        background: item.status === 'available' 
+                          ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
+                          : 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                        color: 'white',
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 2,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        boxShadow: `0 4px 10px rgba(0,0,0,0.3)`
+                      }}
+                    >
+                      {item.status === 'available' ? 'Disponible' : 'Bientôt Disponible'}
+                    </Box>
                     
                     {/* Overlay */}
                     <Box 
@@ -504,7 +634,8 @@ const Home = () => {
         </Container>
         
       </Box>
-            {/* === WINTER LUXURY COLLECTION === */}
+      
+      {/* === WINTER LUXURY COLLECTION === */}
       <Box 
         id="produits"
         sx={{ 
@@ -577,7 +708,6 @@ const Home = () => {
                 transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
               >
                 <Chip
-                  icon={<Diamond sx={{ fontSize: 20 }} />}
                   label="Collection Hivernale Exclusive"
                   sx={{
                     background: `linear-gradient(135deg, #d4af37 0%, #e6f7ff 50%, #d4af37 100%)`,
@@ -646,60 +776,7 @@ const Home = () => {
 
           {/* Winter Products Grid - 4 Cards Exactly */}
           <Grid container spacing={4} justifyContent="center">
-            {[
-              {
-                id: 1,
-                name: 'SPORT PANTS',
-                category: 'Haute Couture',
-                price: '60 TND',
-                oldPrice: '75 TND',
-                discount: '-29%',
-                rating: 4.9,
-                reviews: 89,
-                imageColor: '#1a1a1a',
-                badge: 'Hiver 2024',
-                winterTag: 'Chaleur Extrême'
-              },
-              {
-                id: 2,
-                name: 'T-SHIRT SPORT',
-                category: 'Montres de Luxe',
-                price: '40 TND',
-                oldPrice: '',
-                discount: '',
-                rating: 5.0,
-                reviews: 42,
-                imageColor: '#0f0f0f',
-                badge: 'Édition Limitée',
-                winterTag: 'Résistant au Gel'
-              },
-              {
-                id: 3,
-                name: "SHORT COVER's KNEE",
-                category: 'Bijoux d\'Exception',
-                price: '50 TND',
-                oldPrice: '70 TND',
-                discount: '-16%',
-                rating: 4.8,
-                reviews: 156,
-                imageColor: '#151515',
-                badge: 'Best Seller',
-                winterTag: 'Inspiré des Glaciers'
-              },
-              {
-                id: 4,
-                name: 'HOODIE TAWAKKOL SPORT',
-                category: 'Chaussures Premium',
-                price: '50 TND',
-                oldPrice: '',
-                discount: '',
-                rating: 4.7,
-                reviews: 73,
-                imageColor: '#1a1a1a',
-                badge: 'Nouvelle Collection',
-                winterTag: 'Confort Arctique'
-              }
-            ].map((product, index) => (
+            {products.map((product, index) => (
               <Grid item xs={12} sm={6} md={3} key={product.id} sx={{ display: 'flex' }}>
                 <motion.div
                   initial={{ opacity: 0, y: 60, scale: 0.9 }}
@@ -716,6 +793,7 @@ const Home = () => {
                     transition: { type: "spring", stiffness: 300 }
                   }}
                   style={{ width: '100%' }}
+                  onClick={() => handleProductClick(product.path, product.status)}
                 >
                   <Box
                     sx={{
@@ -730,6 +808,8 @@ const Home = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       width: '100%',
+                      cursor: product.status === 'available' ? 'pointer' : 'default',
+                      opacity: product.status === 'coming-soon' ? 0.9 : 1,
                       '&:hover': {
                         boxShadow: `0 25px 50px rgba(212, 175, 55, 0.2)`,
                         border: `1px solid ${premiumColors.gold}50`,
@@ -743,6 +823,29 @@ const Home = () => {
                       }
                     }}
                   >
+                    {/* Status Badge */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        zIndex: 3,
+                        background: product.status === 'available' 
+                          ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)'
+                          : 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                        color: 'white',
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 2,
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        boxShadow: `0 4px 10px rgba(0,0,0,0.3)`
+                      }}
+                    >
+                      {product.status === 'available' ? 'Disponible' : 'Bientôt'}
+                    </Box>
+
                     {/* Winter Badge */}
                     <motion.div
                       initial={{ rotate: -45, scale: 0 }}
@@ -776,7 +879,7 @@ const Home = () => {
                       className="winter-tag"
                       sx={{
                         position: 'absolute',
-                        top: 12,
+                        top: 50,
                         right: 12,
                         background: 'rgba(230, 247, 255, 0.1)',
                         backdropFilter: 'blur(10px)',
@@ -797,12 +900,12 @@ const Home = () => {
                       {product.winterTag}
                     </Box>
 
-                    {/* Product Image Area with Winter Theme */}
+                    {/* Product Image Area with Real Image */}
                     <Box sx={{ 
                       position: 'relative', 
                       height: 240,
                       overflow: 'hidden',
-                      background: `linear-gradient(135deg, ${product.imageColor} 0%, #1a2a3a 100%)`,
+                      background: `linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -821,25 +924,30 @@ const Home = () => {
                         }}
                       />
                       
-                      {/* Product Image Container */}
+                      {/* Product Image */}
                       <Box
                         className="product-image"
                         sx={{
-                          width: '75%',
-                          height: '75%',
-                          background: `linear-gradient(45deg, rgba(212, 175, 55, 0.1), rgba(230, 247, 255, 0.05))`,
-                          borderRadius: 2,
-                          border: `2px solid rgba(212, 175, 55, 0.2)`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          width: '100%',
+                          height: '100%',
                           transition: 'transform 0.6s ease',
                           zIndex: 2,
                           position: 'relative',
                           overflow: 'hidden'
                         }}
                       >
-                        {/* Snowflake Effect */}
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            filter: product.status === 'coming-soon' ? 'blur(2px)' : 'none'
+                          }}
+                        />
+                        
+                        {/* Snowflake Effect Overlay */}
                         <Box
                           sx={{
                             position: 'absolute',
@@ -847,47 +955,48 @@ const Home = () => {
                             left: 0,
                             width: '100%',
                             height: '100%',
-                            background: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10L60 40L90 50L60 60L50 90L40 60L10 50L40 40L50 10Z' fill='rgba(230, 247, 255, 0.05)'/%3E%3C/svg%3E")`,
+                            background: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10L60 40L90 50L60 60L50 90L40 60L10 50L40 40L50 10Z' fill='rgba(230, 247, 255, 0.1)'/%3E%3C/svg%3E")`,
                             backgroundSize: '50px 50px',
-                            opacity: 0.3
+                            opacity: 0.2,
+                            pointerEvents: 'none'
                           }}
                         />
-                        
-                        <Diamond sx={{ 
-                          fontSize: 50, 
-                          color: 'rgba(212, 175, 55, 0.5)',
-                          filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.3))'
-                        }} />
                       </Box>
 
-                      {/* Small Add to Cart Button */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileHover={{ opacity: 1, scale: 1 }}
-                        style={{
-                          position: 'absolute',
-                          bottom: 16,
-                          right: 16,
-                          zIndex: 3
-                        }}
-                      >
-                        <IconButton
-                          sx={{
-                            background: `linear-gradient(135deg, #d4af37 0%, #e6f7ff 100%)`,
-                            color: premiumColors.noir,
-                            width: 40,
-                            height: 40,
-                            boxShadow: `0 8px 20px rgba(212, 175, 55, 0.4)`,
-                            '&:hover': {
-                              background: `linear-gradient(135deg, #e6f7ff 0%, #d4af37 100%)`,
-                              transform: 'rotate(90deg) scale(1.1)'
-                            },
-                            transition: 'all 0.3s ease'
+                      {/* Small Add to Cart Button - Only show if available */}
+                      {product.status === 'available' && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          whileHover={{ opacity: 1, scale: 1 }}
+                          style={{
+                            position: 'absolute',
+                            bottom: 16,
+                            right: 16,
+                            zIndex: 3
                           }}
                         >
-                          <ShoppingBag sx={{ fontSize: 18 }} />
-                        </IconButton>
-                      </motion.div>
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Add to cart functionality here
+                            }}
+                            sx={{
+                              background: `linear-gradient(135deg, #d4af37 0%, #e6f7ff 100%)`,
+                              color: premiumColors.noir,
+                              width: 40,
+                              height: 40,
+                              boxShadow: `0 8px 20px rgba(212, 175, 55, 0.4)`,
+                              '&:hover': {
+                                background: `linear-gradient(135deg, #e6f7ff 0%, #d4af37 100%)`,
+                                transform: 'rotate(90deg) scale(1.1)'
+                              },
+                              transition: 'all 0.3s ease'
+                            }}
+                          >
+                            <ShoppingBag sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </motion.div>
+                      )}
                     </Box>
 
                     {/* Product Info */}
@@ -1014,27 +1123,33 @@ const Home = () => {
                           </Box>
                         </Box>
                         
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <IconButton
-                            sx={{
-                              background: 'rgba(212, 175, 55, 0.1)',
-                              color: premiumColors.gold,
-                              border: `1px solid rgba(212, 175, 55, 0.3)`,
-                              width: 40,
-                              height: 40,
-                              '&:hover': {
-                                background: 'rgba(212, 175, 55, 0.2)',
-                                border: `1px solid rgba(212, 175, 55, 0.5)`
-                              },
-                              transition: 'all 0.3s ease'
-                            }}
+                        {product.status === 'available' && (
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
                           >
-                            <ArrowForward sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </motion.div>
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleProductClick(product.path, product.status);
+                              }}
+                              sx={{
+                                background: 'rgba(212, 175, 55, 0.1)',
+                                color: premiumColors.gold,
+                                border: `1px solid rgba(212, 175, 55, 0.3)`,
+                                width: 40,
+                                height: 40,
+                                '&:hover': {
+                                  background: 'rgba(212, 175, 55, 0.2)',
+                                  border: `1px solid rgba(212, 175, 55, 0.5)`
+                                },
+                                transition: 'all 0.3s ease'
+                              }}
+                            >
+                              <ArrowForward sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </motion.div>
+                        )}
                       </Box>
                     </Box>
                   </Box>
@@ -1221,7 +1336,7 @@ const Home = () => {
                 variant="contained"
                 size="large"
                 endIcon={<ArrowForward />}
-                onClick={() => faireDefilerVers('produits')}
+                onClick={() => navigate('/catalog')}
                 sx={{
                   background: `linear-gradient(135deg, #d4af37 0%, #e6f7ff 100%)`,
                   color: premiumColors.noir,
@@ -1305,6 +1420,12 @@ const Home = () => {
         .react-multiple-carousel__arrow::before {
           color: ${premiumColors.noir};
           font-weight: bold;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(100%); }
+          100% { transform: translateX(100%); }
         }
       `}</style>
     </Box>

@@ -868,12 +868,39 @@ const handleNavLinkClick = (link) => {
       <PremiumAppBar>
         <Container maxWidth="xl">
           <Toolbar sx={{ py: 1.5 }}>
+            {/* MODIFIED MOBILE LAYOUT */}
+            
+            {/* Left side - Menu Icon (Mobile Only) */}
+            <Box sx={{ 
+              display: { xs: 'flex', md: 'none' },
+              alignItems: 'center',
+              flex: 1,
+              justifyContent: 'flex-start'
+            }}>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerToggle}
+                sx={{
+                  color: premiumColors.gold,
+                  border: `1px solid ${alpha(premiumColors.gold, 0.3)}`,
+                  '&:hover': {
+                    background: alpha(premiumColors.gold, 0.1)
+                  }
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
+
+            {/* Center - Logo (Mobile & Desktop) */}
             <Box sx={{
-              flexGrow: { xs: 1, md: 0 },
-              mr: { md: 6 },
               display: 'flex',
               alignItems: 'center',
-              cursor: 'pointer'
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flex: { xs: 1, md: 0 },
+              mr: { md: 6 }
             }} onClick={handleLogoClick}>
               <Box
                 sx={{
@@ -884,7 +911,7 @@ const handleNavLinkClick = (link) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  mr: 2,
+                  mr: { xs: 1, md: 2 },
                   border: `2px solid ${alpha(premiumColors.gold, 0.3)}`,
                   boxShadow: `0 4px 15px ${alpha(premiumColors.gold, 0.3)}`,
                   transition: 'all 0.3s ease',
@@ -907,17 +934,19 @@ const handleNavLinkClick = (link) => {
               </Box>
               <Box sx={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: { xs: '1.5rem', md: '2.2rem' },
+                fontSize: { xs: '1.2rem', md: '2.2rem' },
                 fontWeight: 'bold',
                 background: `linear-gradient(45deg, ${premiumColors.gold}, ${premiumColors.goldLight})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap'
               }}>
                 Tawakkol
               </Box>
             </Box>
 
+            {/* Desktop Navigation Links */}
             <Box sx={{
               display: { xs: 'none', md: 'flex' },
               flexGrow: 1,
@@ -1011,11 +1040,13 @@ const handleNavLinkClick = (link) => {
               ))}
             </Box>
 
+            {/* Right side - Cart & Actions */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
               gap: { xs: 1, md: 2 },
-              ml: 'auto'
+              flex: 1,
+              justifyContent: 'flex-end'
             }}>
               {/* Desktop Actions */}
               <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
@@ -1088,7 +1119,7 @@ const handleNavLinkClick = (link) => {
                 </IconButton>
               </Box>
 
-              {/* Mobile Actions */}
+              {/* Mobile Actions - Only Cart (Menu is now on left) */}
               <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
                 <IconButton
                   onClick={() => setIsCartOpen(true)}
@@ -1116,22 +1147,6 @@ const handleNavLinkClick = (link) => {
                   >
                     <ShoppingBagOutlined sx={{ fontSize: 20 }} />
                   </Badge>
-                </IconButton>
-
-                <IconButton
-                  color="inherit"
-                  aria-label="open drawer"
-                  edge="end"
-                  onClick={handleDrawerToggle}
-                  sx={{
-                    color: premiumColors.gold,
-                    border: `1px solid ${alpha(premiumColors.gold, 0.3)}`,
-                    '&:hover': {
-                      background: alpha(premiumColors.gold, 0.1)
-                    }
-                  }}
-                >
-                  <MenuIcon />
                 </IconButton>
               </Box>
             </Box>
